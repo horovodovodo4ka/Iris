@@ -1,0 +1,70 @@
+{
+  "name": "Iris",
+  "version": "0.1.0",
+  "summary": "Protocol based network abstraction layer",
+  "description": "Protocol based network abstraction layer.",
+  "homepage": "https://github.com/horovodovodo4ka/Iris",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "horovodovodo4ka": "xbitstream@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/horovodovodo4ka/Iris.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "9.0"
+  },
+  "default_subspecs": "Core",
+  "subspecs": [
+    {
+      "name": "Core",
+      "source_files": "Iris/Classes/Core/**/*.{swift}",
+      "dependencies": {
+        "Iris/Util": [
+
+        ],
+        "PromiseKit": [
+          "~> 6.15.0"
+        ],
+        "PromiseKit/Alamofire": [
+
+        ]
+      }
+    },
+    {
+      "name": "Alamofire",
+      "source_files": "Iris/Classes/Alamofire/**/*.{swift}",
+      "dependencies": {
+        "Iris/Core": [
+
+        ],
+        "Alamofire": [
+          "~> 4.9.0"
+        ],
+        "AlamofireActivityLogger": [
+          "~> 2.5.0"
+        ]
+      }
+    },
+    {
+      "name": "Logging",
+      "source_files": "Iris/Classes/Logging/**/*.{swift}",
+      "dependencies": {
+        "Iris/Core": [
+
+        ],
+        "Astaroth": [
+          "~> 0.4.0"
+        ]
+      }
+    },
+    {
+      "name": "Util",
+      "source_files": "Iris/Classes/Util/**/*.{swift}"
+    }
+  ]
+}
