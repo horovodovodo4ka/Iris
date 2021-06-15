@@ -163,7 +163,6 @@ private final class FlowImpl<ResponseType> : Flow<ResponseType> {
         self.onCancel = onCancel
     }
 
-
     override func pipe(to: @escaping (Result<ResponseType>) -> Void) {
         promise.pipe(to: to)
     }
@@ -176,6 +175,12 @@ private final class FlowImpl<ResponseType> : Flow<ResponseType> {
         if promise.isPending {
             cancellation.resolver.reject(PMKError.cancelled)
             onCancel()
+        }
+    }
+
+    deinit {
+        if cancellation.promise.isPending {
+            cancellation.resolver.reject(PMKError.cancelled)
         }
     }
 }
