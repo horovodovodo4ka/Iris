@@ -11,12 +11,12 @@ public typealias OperationCancellation = (() -> Void)
 public typealias OperationResult = (response: HTTPURLResponse, data: Data)
 
 public protocol CallContext {
-    var printer: NetworkOperationPrinter { get }
+    var printer: Printer { get }
     var callSite: StackTraceElement { get }
 }
 
 public protocol Executor {
-    func execute(operation: NetworkOperation,
+    func execute(operation: Operation,
                  context: CallContext,
                  data requestData: () throws -> Data?,
                  response: @escaping (Result<OperationResult, Error>) -> Void
