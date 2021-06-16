@@ -15,9 +15,11 @@ public extension WriteOperation {
     var method: HTTPMethod { .post }
 }
 
-public extension ReadOperation where Self: WriteOperation {
+public extension WriteOperation where Self: ReadOperation {
     var method: HTTPMethod { .post }
 }
+
+//MARK: -
 
 public enum HTTPError: Error {
     case clientError(code: Int)
@@ -25,17 +27,18 @@ public enum HTTPError: Error {
     case unknownResponseCode(code: Int)
 }
 
-public extension Validator {
-    static let success = Validator { response, data in
-        switch response.statusCode {
-            case 100..<300:
-                return
-            case 400..<500:
-                throw HTTPError.clientError(code: response.statusCode)
-            case 500..<600:
-                throw HTTPError.serverError(code: response.statusCode)
-            default:
-                throw HTTPError.unknownResponseCode(code: response.statusCode)
-        }
+public let statusCodeValidator: OperationValidator = {
+    let statusCode = $1.response.statusCode
+
+    switch statusCode {
+        case 100..<300:
+            return
+        case 400..<500:
+            throw HTTPError.clientError(code: statusCode)
+        case 500..<600:
+            throw HTTPError.serverError(code: statusCode)
+        default:
+            throw HTTPError.unknownResponseCode(code: statusCode)
     }
 }
+

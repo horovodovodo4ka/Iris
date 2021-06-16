@@ -8,27 +8,25 @@
 import Foundation
 import PromiseKit
 
+public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
+public typealias OparationHeaders = (Operation) -> [String : String]
+public typealias OperationRecover = (Operation, Error) throws -> Promise<Void>
+
 public struct RawOperationResult {
     public let response: HTTPURLResponse
     public let data: Data
 }
 
-public protocol Middleware {
-    func headers(for operation: Operation) -> [String: String]
-    func validate(operation: Operation, with result: RawOperationResult) throws
-    func recover(operation: Operation, error: Error) throws -> Promise<Void>
-}
-
-public extension Middleware {
-    func headers(for operation: Operation) -> [String: String] {
-        [:]
+public struct Middleware {
+    public init(headers: @escaping OparationHeaders = { _ in [:] },
+                validate: @escaping OperationValidator = { _, _ in },
+                recover: @escaping OperationRecover = { _, error in .init(error: error) }) {
+        self.headers = headers
+        self.validate = validate
+        self.recover = recover
     }
 
-    func validate(operation: Operation, with result: RawOperationResult) throws {
-        //
-    }
-
-    func recover(operation: Operation, error: Error) throws -> Promise<Void> {
-        return Promise.value(())
-    }
+    let headers: (Operation) -> [String: String]
+    let validate: (Operation, RawOperationResult) throws -> Void
+    let recover: (Operation, Error) throws -> Promise<Void>
 }

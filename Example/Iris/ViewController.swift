@@ -9,7 +9,6 @@
 import UIKit
 import Iris
 
-
 class ViewController: UIViewController {
 
     override func viewDidLoad() {
@@ -20,7 +19,11 @@ class ViewController: UIViewController {
             configuration: .default,
             executor: AlamofireExecutor())
 
-        transport.execute(TestOperation())
+        transport.add(middlware: .test)
+
+        transport.execute(TestOperation()).tap {
+            print($0)
+        }
     }
 
     override func didReceiveMemoryWarning() {
@@ -28,6 +31,18 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
+}
+
+import PromiseKit
+
+extension Middleware {
+    static let test = Middleware(
+        validate: statusCodeValidator,
+        recover: { _, e in
+            after(seconds: 3)
+                .then { _ -> Promise<Void> in .value(()) }
+        }
+    )
 }
 
 extension TransportConfig {

@@ -20,13 +20,11 @@ public struct TransportConfig {
     public let printer: Printer
     public let encoder: RequestEncoder
     public let decoder: ResponseDecoder
-    public let middlewares: [Middleware]
 
-    public init(printer: Printer, encoder: RequestEncoder, decoder: ResponseDecoder, middlewares: [Middleware]) {
+    public init(printer: Printer, encoder: RequestEncoder, decoder: ResponseDecoder) {
         self.printer = printer
         self.encoder = encoder
         self.decoder = decoder
-        self.middlewares = middlewares
     }
 }
 
@@ -35,6 +33,15 @@ public final class Transport {
     public init(configuration: TransportConfig, executor: Executor) {
         self.configuration = configuration
         self.executor = executor
+    }
+
+    public let configuration: TransportConfig
+    public let executor: Executor
+
+    public private(set) var middlewares: [Middleware] = []
+
+    public func add(middlware: Middleware) {
+        middlewares.append(middlware)
     }
 
     @discardableResult
@@ -50,7 +57,7 @@ public final class Transport {
     public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<Void> where O: WriteOperation, O.RequestType == RequestType {
 
         return execute(operation: operation,
-                       data: { try configuration.encoder.encode(operation.request) },
+                       data: { try self.configuration.encoder.encode(operation.request) },
                        response: { _ in () },
                        callSite: callSite)
     }
@@ -59,23 +66,21 @@ public final class Transport {
     public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<ResponseType> where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
 
         return execute(operation: operation,
-                       data: { try configuration.encoder.encode(operation.request) },
+                       data: { try self.configuration.encoder.encode(operation.request) },
                        response: { try self.configuration.decoder.decode(ResponseType.self, from: $0) },
                        callSite: callSite)
     }
 
-    public let configuration: TransportConfig
-
-    public let executor: Executor
+    // MARK : - private
 
     private func execute<ResponseType>(operation: Operation,
-                                       data requestData: () throws -> Data?,
+                                       data requestData: @escaping () throws -> Data?,
                                        response: @escaping (Data) throws -> ResponseType,
                                        callSite: StackTraceElement) -> Flow<ResponseType> {
 
         let logger = configuration.printer
 
-        return Flow<OperationResult>(transport: self) { seal in
+        let flow = Flow<OperationResult>(transport: self) { seal in
             try executor
                 .execute(operation: operation,
                          context: _CallContext(printer: configuration.printer, callSite: callSite),
@@ -90,10 +95,10 @@ public final class Transport {
         }
         .map { result in
             do {
-                if let validated = operation as? Validated {
-                    for validator in validated.validators {
-                        try validator.validate(result.response, result.data)
-                    }
+                let rawResult = RawOperationResult(response: result.response, data: result.data)
+
+                for validator in self.middlewares {
+                    try validator.validate(operation, rawResult)
                 }
 
                 return try response(result.data)
@@ -109,8 +114,66 @@ public final class Transport {
 
             throw error
         }
+
+        return flow
+            .recover { e -> Flow<ResponseType> in
+                self.pipeRecovers(operation: operation, error: e, to: flow)
+                    .then {
+                        self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
+                    }
+            }
+    }
+
+    // middlewares recover section chaining
+
+    private func pipeRecovers<T>(operation: Operation, error: Error, to: Flow<T>) -> Flow<Void> {
+
+        guard middlewares.count > 0 else {
+            return Flow(transport: self, promise: Promise(error: error))
+        }
+
+        func safePromise(_ block: (Operation, Error) throws -> Promise<Void>) -> Promise<Void> {
+            do {
+                return try block(operation, error)
+            } catch {
+                return Promise(error: error)
+            }
+        }
+
+        if middlewares.count == 1, let first = middlewares.first {
+            return Flow(transport: self, promise: safePromise(first.recover))
+        }
+
+        let lazyPromises = middlewares.map { $0.recover }.lazy.map(safePromise(_:))
+
+        var it = lazyPromises.makeIterator()
+
+        var tail: Flow<Void>!
+
+        func chain(_ promise: Promise<Void>) -> Flow<Void> {
+            if let f = tail {
+                tail = f.then { promise }
+            } else {
+                tail = to.then { _ in promise }
+            }
+            return tail
+        }
+
+        func next() -> Flow<Void> {
+            // If there is any next recover block, try it
+            guard let nextRecoverBlock = it.next() else {
+                return chain(Promise<Void>(error: error))
+            }
+
+            // If recover block raises error, try next recover block
+            return chain(nextRecoverBlock).recover { error in next() }
+        }
+
+        return next()
     }
 }
+
+// MARK: - call site collector
 
 public extension Transport {
 

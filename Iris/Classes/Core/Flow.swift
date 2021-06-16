@@ -32,16 +32,20 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
                  context: Pending<Void> = Promise<Void>.pending(),
                  cancellationCallback: @escaping () -> () = {}) {
 
-        self.host = race(host.asVoid(), context.promise).map { $0 as! ResponseType }
+        self.host = race(host.asVoid(), context.promise).map(on: nil) { host.value! }
         self.conext = context
         self.cancellationCallback = cancellationCallback
         self.transport = transport
 
-        self.host.catch(policy: .allErrors) {
-            if $0.isCancelled {
-                self.cancelChain()
+        self.host
+            .done { _ in
+                self.finalize()
             }
-        }
+            .catch(policy: .allErrors) {
+                if $0.isCancelled {
+                    self.cancelChain()
+                }
+            }
     }
 
     fileprivate convenience init(host: Promise<ResponseType>,
@@ -49,7 +53,9 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
                                  context: Pending<Void>,
                                  parent: AnyFlow) {
         self.init(host: host, transport: transport, context: context)
+        
         parent.children.append(self)
+        self.parent = parent
     }
 
     let transport: Transport
@@ -80,12 +86,20 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
 
         cancellationCallback()
 
-        parent?.children.removeAll { $0 === self }
+        finalize()
         parent?.cancel()
+    }
+
+    func finalize() {
+        parent?.children.removeAll { $0 === self }
     }
 }
 
 public extension Flow {
+
+    convenience init(transport: Transport, promise: Promise<ResponseType>) {
+        self.init(host: promise, transport: transport)
+    }
 
     convenience init(transport: Transport, _ factory: (Resolver<ResponseType>) throws -> (OperationCancellation)) {
         var callback: OperationCancellation = {}
