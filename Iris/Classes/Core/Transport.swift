@@ -83,7 +83,7 @@ public final class Transport {
         let flow = Flow<OperationResult>(transport: self) { seal in
             try executor
                 .execute(operation: operation,
-                         context: _CallContext(printer: configuration.printer, callSite: callSite),
+                         context: CallContext(printer: configuration.printer, callSite: callSite),
                          data: requestData) { result in
                     switch result {
                         case .success(let data):
@@ -173,43 +173,3 @@ public final class Transport {
     }
 }
 
-// MARK: - call site collector
-
-public extension Transport {
-
-    @discardableResult
-    func execute<ResponseType, O>(_ operation: O, file: StaticString = #file, method: StaticString = #function, line: UInt = #line, column: UInt = #column) -> Flow<ResponseType>
-    where
-        O: ReadOperation, O.ResponseType == ResponseType {
-
-        let callSite = StackTraceElement(filename: file, method: method, line: line, column: column)
-
-        return execute(operation, from: callSite)
-    }
-
-    @discardableResult
-    func execute<RequestType, O>(_ operation: O, file: StaticString = #file, method: StaticString = #function, line: UInt = #line, column: UInt = #column) -> Flow<Void>
-    where
-        O: WriteOperation, O.RequestType == RequestType {
-
-        let callSite = StackTraceElement(filename: file, method: method, line: line, column: column)
-
-        return execute(operation, from: callSite)
-    }
-
-    @discardableResult
-    func execute<RequestType, ResponseType, O>(_ operation: O, file: StaticString = #file, method: StaticString = #function, line: UInt = #line, column: UInt = #column) -> Flow<ResponseType>
-    where
-        O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
-
-        let callSite = StackTraceElement(filename: file, method: method, line: line, column: column)
-
-        return execute(operation, from: callSite)
-    }
-}
-
-// MARK: - private
-private struct _CallContext : CallContext {
-    let printer: Printer
-    let callSite: StackTraceElement
-}

@@ -28,6 +28,20 @@ class ViewController: UIViewController {
         TestResource(transport: transport).read().tap {
             print($0)
         }
+
+        blah()
+    }
+
+    private func blah() {
+        let st1: StackTraceElement = .context()
+        let st2: StackTraceElement = .here()
+        let st3: StackTraceElement = .source()
+        let st4 = some
+        let st5 = stat()
+    }
+
+    var some: StackTraceElement {
+        .here()
     }
 
     override func didReceiveMemoryWarning() {
@@ -37,6 +51,9 @@ class ViewController: UIViewController {
 
 }
 
+func stat() -> StackTraceElement {
+    .here()
+}
 // transport
 
 extension TransportConfig {

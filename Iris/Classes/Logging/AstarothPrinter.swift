@@ -35,6 +35,6 @@ public class AstarothPrinter: Printer {
 
 private extension StackTraceElement {
     var astaroth: Astaroth.StackTraceElement {
-        Astaroth.StackTraceElement(filename: filename, method: method, line: line, column: column)
+        Astaroth.StackTraceElement(filename: "", method: `where`, line: 0, column: 0)
     }
 }

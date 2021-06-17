@@ -28,14 +28,8 @@ public protocol Readable: Resource {
 }
 
 public extension Readable {
-    func read(entityWithId id: ResourceId<ModelId> = .this, _ callSite: StackTraceElement) -> Flow<ModelType> {
+    func read(entityWithId id: ResourceId<ModelId> = .this, _ callSite: StackTraceElement = .context()) -> Flow<ModelType> {
         transport.execute(readOperation(id), from: callSite)
-    }
-
-    func read(entityWithId id: ResourceId<ModelId> = .this, file: StaticString = #file, method: StaticString = #function,
-              line: UInt = #line, column: UInt = #column) -> Flow<ModelType> {
-
-        read(entityWithId: id, StackTraceElement(filename: file, method: method, line: line, column: column))
     }
 }
 
@@ -50,14 +44,8 @@ public protocol Listable: Resource {
 }
 
 public extension Listable {
-    func list(_ callSite: StackTraceElement) -> Flow<[ModelType]> {
+    func list(_ callSite: StackTraceElement = .context()) -> Flow<[ModelType]> {
         transport.execute(listOperation(), from: callSite)
-    }
-
-    func list(file: StaticString = #file, method: StaticString = #function,
-              line: UInt = #line, column: UInt = #column) -> Flow<[ModelType]> {
-
-        list(StackTraceElement(filename: file, method: method, line: line, column: column))
     }
 }
 
@@ -74,14 +62,8 @@ public protocol Creatable: Resource {
 }
 
 public extension Creatable {
-    func create(entity model: NewModelType, _ callSite: StackTraceElement) -> Flow<ModelType> {
+    func create(entity model: NewModelType, _ callSite: StackTraceElement = .context()) -> Flow<ModelType> {
         transport.execute(createOperation(model), from: callSite)
-    }
-
-    func create(entity model: NewModelType, file: StaticString = #file, method: StaticString = #function,
-              line: UInt = #line, column: UInt = #column) -> Flow<ModelType> {
-
-        create(entity: model, StackTraceElement(filename: file, method: method, line: line, column: column))
     }
 }
 
@@ -97,14 +79,8 @@ public protocol Updateable: Resource {
 }
 
 public extension Updateable {
-    func update(entity model: ModelType, _ callSite: StackTraceElement) -> Flow<ModelType> {
+    func update(entity model: ModelType, _ callSite: StackTraceElement = .context()) -> Flow<ModelType> {
         transport.execute(createOperation(model), from: callSite)
-    }
-
-    func update(entity model: ModelType, file: StaticString = #file, method: StaticString = #function,
-                line: UInt = #line, column: UInt = #column) -> Flow<ModelType> {
-
-        update(entity: model, StackTraceElement(filename: file, method: method, line: line, column: column))
     }
 }
 
@@ -119,13 +95,7 @@ public protocol Deletable: Resource {
 }
 
 public extension Deletable {
-    func delete(entity model: ModelType, _ callSite: StackTraceElement) -> Flow<Void> {
+    func delete(entity model: ModelType, _ callSite: StackTraceElement = .context()) -> Flow<Void> {
         transport.execute(deleteOperation(model), from: callSite)
-    }
-
-    func delete(entity model: ModelType, file: StaticString = #file, method: StaticString = #function,
-                line: UInt = #line, column: UInt = #column) -> Flow<Void> {
-
-        delete(entity: model, StackTraceElement(filename: file, method: method, line: line, column: column))
     }
 }

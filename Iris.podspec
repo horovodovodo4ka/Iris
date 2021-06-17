@@ -53,7 +53,7 @@ Pod::Spec.new do |s|
 
     sp.dependency 'Iris/Core'
 
-    sp.dependency 'Astaroth', '~> 0.4.0'
+    sp.dependency 'Astaroth', '~> 0.5.0'
   end
 
   s.subspec 'Util' do |sp|

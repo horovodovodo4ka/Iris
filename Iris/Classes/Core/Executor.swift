@@ -10,9 +10,9 @@ import Foundation
 public typealias OperationCancellation = (() -> Void)
 public typealias OperationResult = (response: HTTPURLResponse, data: Data)
 
-public protocol CallContext {
-    var printer: Printer { get }
-    var callSite: StackTraceElement { get }
+public struct CallContext {
+    let printer: Printer
+    let callSite: StackTraceElement
 }
 
 public protocol Executor {
