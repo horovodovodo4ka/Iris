@@ -18,6 +18,7 @@ private protocol AnyFlow: AnyObject {
     func cancel()
 }
 
+// TODO replace this shit with async await when released
 public class Flow<ResponseType>: AnyFlow, Thenable {
     public typealias T = ResponseType
 

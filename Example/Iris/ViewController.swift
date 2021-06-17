@@ -21,7 +21,11 @@ class ViewController: UIViewController {
 
         transport.add(middlware: .test)
 
-        transport.execute(TestOperation()).tap {
+//        transport.execute(TestOperation()).tap {
+//            print($0)
+//        }
+
+        TestResource(transport: transport).read().tap {
             print($0)
         }
     }
@@ -31,6 +35,12 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
+}
+
+// transport
+
+extension TransportConfig {
+    static let `default` = TransportConfig(printer: AstarothPrinter(), encoder: jsonEncoder, decoder: jsonDecoder)
 }
 
 import PromiseKit
@@ -45,9 +55,21 @@ extension Middleware {
     )
 }
 
-extension TransportConfig {
-    static let `default` = TransportConfig(printer: AstarothPrinter(), encoder: jsonEncoder, decoder: jsonDecoder)
+// resource
+
+struct TestResource: Readable {
+    typealias ModelId = Int
+    typealias ModelType = TestOperation.Response
+    typealias ReadOperationType = TestOperation
+
+    let transport: Transport
+
+    func readOperation(_ resourceId: ResourceId<Int>) -> TestOperation {
+        TestOperation()
+    }
 }
+
+// operation
 
 struct TestOperation: ReadOperation, WriteOperation {
 
@@ -67,8 +89,8 @@ struct TestOperation: ReadOperation, WriteOperation {
 
     var headers: [String : String] { [:] }
 
-//    var url: String { "https://reqbin.com/echo/post/json" }
-    var url: String { "https://google.ru" }
+    var url: String { "https://reqbin.com/echo/post/json" }
+//    var url: String { "https://google.ru" }
 
     var request: Request {
         Request()
