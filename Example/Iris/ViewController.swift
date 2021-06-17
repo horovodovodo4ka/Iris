@@ -30,6 +30,9 @@ class ViewController: UIViewController {
         }
 
         blah()
+
+        let r = try! QueryString().encode(TestOperation.Request())
+
     }
 
     private func blah() {
@@ -92,9 +95,18 @@ struct TestOperation: ReadOperation, WriteOperation {
 
     struct Request: Encodable {
         var id = 78912
-        var customer = "Jason Sweet"
+        var customer = "Jason Sweet[ ? # ]"
         var quantity = 1
         var price = 18.00
+        var testA = A()
+        var nexting = [[1],[2,3],[4,5,6]]
+        var testArr = [1, 2, 3]
+        var testDict = ["a": 1, "b": 2, "c[]": 3]
+
+        struct A: Encodable {
+            var b = 1
+            var c = "a[]"
+        }
     }
 
     struct Response: Decodable {
