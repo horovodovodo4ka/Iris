@@ -17,11 +17,11 @@ public protocol RequestEncoder {
 }
 
 public struct TransportConfig {
-    public let printer: NetworkOperationPrinter
+    public let printer: Printer
     public let encoder: RequestEncoder
     public let decoder: ResponseDecoder
 
-    public init(printer: NetworkOperationPrinter, encoder: RequestEncoder, decoder: ResponseDecoder) {
+    public init(printer: Printer, encoder: RequestEncoder, decoder: ResponseDecoder) {
         self.printer = printer
         self.encoder = encoder
         self.decoder = decoder
@@ -35,6 +35,16 @@ public final class Transport {
         self.executor = executor
     }
 
+    public let configuration: TransportConfig
+    public let executor: Executor
+
+    public private(set) var middlewares: [Middleware] = []
+
+    public func add(middlware: Middleware) {
+        middlewares.append(middlware)
+    }
+
+    @discardableResult
     public func execute<ResponseType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<ResponseType> where O: ReadOperation, O.ResponseType == ResponseType {
 
         return execute(operation: operation,
@@ -43,42 +53,37 @@ public final class Transport {
                        callSite: callSite)
     }
 
+    @discardableResult
     public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<Void> where O: WriteOperation, O.RequestType == RequestType {
 
         return execute(operation: operation,
-                data: { try configuration.encoder.encode(operation.request) },
-                response: { _ in () },
-                callSite: callSite)
+                       data: { try self.configuration.encoder.encode(operation.request) },
+                       response: { _ in () },
+                       callSite: callSite)
     }
 
-
+    @discardableResult
     public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<ResponseType> where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
 
         return execute(operation: operation,
-                data: { try configuration.encoder.encode(operation.request) },
-                response: { try self.configuration.decoder.decode(ResponseType.self, from: $0) },
-                callSite: callSite)
+                       data: { try self.configuration.encoder.encode(operation.request) },
+                       response: { try self.configuration.decoder.decode(ResponseType.self, from: $0) },
+                       callSite: callSite)
     }
 
-    public let configuration: TransportConfig
+    // MARK : - private
 
-    public let executor: Executor
-
-    private func execute<ResponseType>(operation: NetworkOperation,
-                                       data requestData: () throws -> Data?,
+    private func execute<ResponseType>(operation: Operation,
+                                       data requestData: @escaping () throws -> Data?,
                                        response: @escaping (Data) throws -> ResponseType,
                                        callSite: StackTraceElement) -> Flow<ResponseType> {
 
         let logger = configuration.printer
 
-        let race = Promise<Void>.pending()
-
-        var cancellation: OperationCancellation!
-
-        return Promise<OperationResult> { seal in
-            cancellation = try executor
+        let flow = Flow<OperationResult>(transport: self) { seal in
+            try executor
                 .execute(operation: operation,
-                         context: _CallContext(printer: configuration.printer, callSite: callSite),
+                         context: CallContext(printer: configuration.printer, callSite: callSite),
                          data: requestData) { result in
                     switch result {
                         case .success(let data):
@@ -88,11 +93,12 @@ public final class Transport {
                     }
                 }
         }
-        .asFlow(race, onCancel: cancellation)
         .map { result in
             do {
-                for validator in operation.handler.validators {
-                    try validator.validate(result.response, result.data)
+                let rawResult = RawOperationResult(response: result.response, data: result.data)
+
+                for validator in self.middlewares {
+                    try validator.validate(operation, rawResult)
                 }
 
                 return try response(result.data)
@@ -108,80 +114,62 @@ public final class Transport {
 
             throw error
         }
-        .asFlow(race, onCancel: cancellation)
-    }
-}
 
-public extension Transport {
-    func execute<ResponseType, O>(_ operation: O, file: StaticString = #file, method: StaticString = #function, line: UInt = #line, column: UInt = #column) -> Flow<ResponseType>
-    where
-        O: ReadOperation, O.ResponseType == ResponseType {
-
-        let callSite = StackTraceElement(filename: file, method: method, line: line, column: column)
-
-        return execute(operation, from: callSite)
+        return flow
+            .recover { e -> Flow<ResponseType> in
+                self.pipeRecovers(operation: operation, error: e, to: flow)
+                    .then {
+                        self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
+                    }
+            }
     }
 
-    func execute<RequestType, O>(_ operation: O, file: StaticString = #file, method: StaticString = #function, line: UInt = #line, column: UInt = #column) -> Flow<Void>
-    where
-        O: WriteOperation, O.RequestType == RequestType {
+    // middlewares recover section chaining
 
-        let callSite = StackTraceElement(filename: file, method: method, line: line, column: column)
+    private func pipeRecovers<T>(operation: Operation, error: Error, to: Flow<T>) -> Flow<Void> {
 
-        return execute(operation, from: callSite)
-    }
-
-    func execute<RequestType, ResponseType, O>(_ operation: O, file: StaticString = #file, method: StaticString = #function, line: UInt = #line, column: UInt = #column) -> Flow<ResponseType>
-    where
-        O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
-
-        let callSite = StackTraceElement(filename: file, method: method, line: line, column: column)
-
-        return execute(operation, from: callSite)
-    }
-}
-
-// MARK: - private
-private struct _CallContext : CallContext {
-    let printer: NetworkOperationPrinter
-    let callSite: StackTraceElement
-}
-
-private typealias Pending<T> = (promise: Promise<T>, resolver: Resolver<T>)
-
-private final class FlowImpl<ResponseType> : Flow<ResponseType> {
-    private let cancellation: Pending<Void>
-    private let wrapped: Promise<ResponseType>
-    private let promise: Promise<ResponseType>
-
-    private let onCancel: OperationCancellation
-
-    init(promise: Promise<ResponseType>, cancellation: Pending<Void>, onCancel: @escaping OperationCancellation) {
-        self.wrapped = promise
-        self.promise = promise //race(promise.asVoid(), cancellation.promise).map { $0 as! ResponseType }
-        self.cancellation = cancellation
-        self.onCancel = onCancel
-    }
-
-
-    override func pipe(to: @escaping (Result<ResponseType>) -> Void) {
-        promise.pipe(to: to)
-    }
-
-    override var result: Result<ResponseType>? {
-        promise.result
-    }
-
-    public override func cancel() {
-        if promise.isPending {
-            cancellation.resolver.reject(PMKError.cancelled)
-            onCancel()
+        guard middlewares.count > 0 else {
+            return Flow(transport: self, promise: Promise(error: error))
         }
+
+        func safePromise(_ block: (Operation, Error) throws -> Promise<Void>) -> Promise<Void> {
+            do {
+                return try block(operation, error)
+            } catch {
+                return Promise(error: error)
+            }
+        }
+
+        if middlewares.count == 1, let first = middlewares.first {
+            return Flow(transport: self, promise: safePromise(first.recover))
+        }
+
+        let lazyPromises = middlewares.map { $0.recover }.lazy.map(safePromise(_:))
+
+        var it = lazyPromises.makeIterator()
+
+        var tail: Flow<Void>!
+
+        func chain(_ promise: Promise<Void>) -> Flow<Void> {
+            if let f = tail {
+                tail = f.then { promise }
+            } else {
+                tail = to.then { _ in promise }
+            }
+            return tail
+        }
+
+        func next() -> Flow<Void> {
+            // If there is any next recover block, try it
+            guard let nextRecoverBlock = it.next() else {
+                return chain(Promise<Void>(error: error))
+            }
+
+            // If recover block raises error, try next recover block
+            return chain(nextRecoverBlock).recover { error in next() }
+        }
+
+        return next()
     }
 }
 
-private extension Promise {
-    func asFlow(_ cancellation: Pending<Void>, onCancel: @escaping OperationCancellation) -> Flow<T> {
-        FlowImpl(promise: self, cancellation: cancellation, onCancel: onCancel)
-    }
-}

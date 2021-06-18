@@ -7,12 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		008AB216C50ECA8F54A12B6B /* Pods_Iris_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 586F7FA6607B38BE11F86E6C /* Pods_Iris_Example.framework */; };
+		52D4D67B26794C99006C6DB3 /* Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACEB1AFB9204008FA782 /* Tests.swift */; };
 		607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD51AFB9204008FA782 /* AppDelegate.swift */; };
 		607FACD81AFB9204008FA782 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACD71AFB9204008FA782 /* ViewController.swift */; };
 		607FACDB1AFB9204008FA782 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 607FACD91AFB9204008FA782 /* Main.storyboard */; };
 		607FACDD1AFB9204008FA782 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDC1AFB9204008FA782 /* Images.xcassets */; };
 		607FACE01AFB9204008FA782 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDE1AFB9204008FA782 /* LaunchScreen.xib */; };
+		A8A303B9D6B9047BC1630977 /* Pods_Iris_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 84DA362E9F04002EB9860DE2 /* Pods_Iris_Tests.framework */; };
+		CD8498FB0CAEFAF2832C014D /* Pods_Iris_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA5E5D157CB892D611B22AD8 /* Pods_Iris_Example.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -26,9 +28,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		02B430F122436DB0C7FFC1C5 /* Pods-Iris_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Iris_Example.release.xcconfig"; path = "Target Support Files/Pods-Iris_Example/Pods-Iris_Example.release.xcconfig"; sourceTree = "<group>"; };
 		1647B3F05E4309743AC9B07D /* Iris.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = Iris.podspec; path = ../Iris.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
-		2EF942FF040FC01616F690AB /* Pods-Iris_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Iris_Example.debug.xcconfig"; path = "Target Support Files/Pods-Iris_Example/Pods-Iris_Example.debug.xcconfig"; sourceTree = "<group>"; };
-		586F7FA6607B38BE11F86E6C /* Pods_Iris_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Iris_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		38225F0844CC4D0394B9E452 /* Pods-Iris_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Iris_Example.debug.xcconfig"; path = "Target Support Files/Pods-Iris_Example/Pods-Iris_Example.debug.xcconfig"; sourceTree = "<group>"; };
+		43D46518144149F12AD98C06 /* Pods-Iris_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Iris_Tests.release.xcconfig"; path = "Target Support Files/Pods-Iris_Tests/Pods-Iris_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		5BDC6411721F6A9F9F69A5F3 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		607FACD01AFB9204008FA782 /* Iris_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Iris_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		607FACD41AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -40,8 +43,10 @@
 		607FACE51AFB9204008FA782 /* Iris_Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Iris_Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		607FACEA1AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		607FACEB1AFB9204008FA782 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
+		84DA362E9F04002EB9860DE2 /* Pods_Iris_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Iris_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		8B653CEC24A2C81E05E20F59 /* Pods-Iris_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Iris_Tests.debug.xcconfig"; path = "Target Support Files/Pods-Iris_Tests/Pods-Iris_Tests.debug.xcconfig"; sourceTree = "<group>"; };
 		B7802018B5A6916BD9D6A346 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
-		E6C5AAF272770AE3603B7799 /* Pods-Iris_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Iris_Example.release.xcconfig"; path = "Target Support Files/Pods-Iris_Example/Pods-Iris_Example.release.xcconfig"; sourceTree = "<group>"; };
+		DA5E5D157CB892D611B22AD8 /* Pods_Iris_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Iris_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,7 +54,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				008AB216C50ECA8F54A12B6B /* Pods_Iris_Example.framework in Frameworks */,
+				CD8498FB0CAEFAF2832C014D /* Pods_Iris_Example.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,6 +62,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A8A303B9D6B9047BC1630977 /* Pods_Iris_Tests.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -66,8 +72,10 @@
 		5C07D74587FD22F8E627FA78 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				2EF942FF040FC01616F690AB /* Pods-Iris_Example.debug.xcconfig */,
-				E6C5AAF272770AE3603B7799 /* Pods-Iris_Example.release.xcconfig */,
+				38225F0844CC4D0394B9E452 /* Pods-Iris_Example.debug.xcconfig */,
+				02B430F122436DB0C7FFC1C5 /* Pods-Iris_Example.release.xcconfig */,
+				8B653CEC24A2C81E05E20F59 /* Pods-Iris_Tests.debug.xcconfig */,
+				43D46518144149F12AD98C06 /* Pods-Iris_Tests.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -80,7 +88,7 @@
 				607FACE81AFB9204008FA782 /* Tests */,
 				607FACD11AFB9204008FA782 /* Products */,
 				5C07D74587FD22F8E627FA78 /* Pods */,
-				C69C5A5DB5259303E60F77D1 /* Frameworks */,
+				A5CE3DD2A179412927B37DE4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -142,10 +150,11 @@
 			name = "Podspec Metadata";
 			sourceTree = "<group>";
 		};
-		C69C5A5DB5259303E60F77D1 /* Frameworks */ = {
+		A5CE3DD2A179412927B37DE4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				586F7FA6607B38BE11F86E6C /* Pods_Iris_Example.framework */,
+				DA5E5D157CB892D611B22AD8 /* Pods_Iris_Example.framework */,
+				84DA362E9F04002EB9860DE2 /* Pods_Iris_Tests.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -157,11 +166,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 607FACEF1AFB9204008FA782 /* Build configuration list for PBXNativeTarget "Iris_Example" */;
 			buildPhases = (
-				96542A9F7FED699DABF911C8 /* [CP] Check Pods Manifest.lock */,
+				C7AE41BF024ADD6EB45CF7FB /* [CP] Check Pods Manifest.lock */,
 				607FACCC1AFB9204008FA782 /* Sources */,
 				607FACCD1AFB9204008FA782 /* Frameworks */,
 				607FACCE1AFB9204008FA782 /* Resources */,
-				C5DC2D03A5CEFF84A6B99846 /* [CP] Embed Pods Frameworks */,
+				446456A515D02FC3CBF229F2 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -176,9 +185,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 607FACF21AFB9204008FA782 /* Build configuration list for PBXNativeTarget "Iris_Tests" */;
 			buildPhases = (
+				DC5C884617646D90AD0858EE /* [CP] Check Pods Manifest.lock */,
 				607FACE11AFB9204008FA782 /* Sources */,
 				607FACE21AFB9204008FA782 /* Frameworks */,
 				607FACE31AFB9204008FA782 /* Resources */,
+				9F1D946E03360DF6895495EA /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -252,29 +263,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		96542A9F7FED699DABF911C8 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-Iris_Example-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-		C5DC2D03A5CEFF84A6B99846 /* [CP] Embed Pods Frameworks */ = {
+		446456A515D02FC3CBF229F2 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -300,6 +289,70 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Iris_Example/Pods-Iris_Example-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
+		9F1D946E03360DF6895495EA /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Iris_Tests/Pods-Iris_Tests-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/Nimble/Nimble.framework",
+				"${BUILT_PRODUCTS_DIR}/Quick/Quick.framework",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Nimble.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Quick.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Iris_Tests/Pods-Iris_Tests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C7AE41BF024ADD6EB45CF7FB /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Iris_Example-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		DC5C884617646D90AD0858EE /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Iris_Tests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -316,6 +369,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				52D4D67B26794C99006C6DB3 /* Tests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -450,7 +504,7 @@
 		};
 		607FACF01AFB9204008FA782 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2EF942FF040FC01616F690AB /* Pods-Iris_Example.debug.xcconfig */;
+			baseConfigurationReference = 38225F0844CC4D0394B9E452 /* Pods-Iris_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = Iris/Info.plist;
@@ -465,7 +519,7 @@
 		};
 		607FACF11AFB9204008FA782 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E6C5AAF272770AE3603B7799 /* Pods-Iris_Example.release.xcconfig */;
+			baseConfigurationReference = 02B430F122436DB0C7FFC1C5 /* Pods-Iris_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = Iris/Info.plist;
@@ -480,6 +534,7 @@
 		};
 		607FACF31AFB9204008FA782 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8B653CEC24A2C81E05E20F59 /* Pods-Iris_Tests.debug.xcconfig */;
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
@@ -501,6 +556,7 @@
 		};
 		607FACF41AFB9204008FA782 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 43D46518144149F12AD98C06 /* Pods-Iris_Tests.release.xcconfig */;
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(PLATFORM_DIR)/Developer/Library/Frameworks",

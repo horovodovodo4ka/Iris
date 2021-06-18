@@ -10,13 +10,13 @@ import Foundation
 public typealias OperationCancellation = (() -> Void)
 public typealias OperationResult = (response: HTTPURLResponse, data: Data)
 
-public protocol CallContext {
-    var printer: NetworkOperationPrinter { get }
-    var callSite: StackTraceElement { get }
+public struct CallContext {
+    let printer: Printer
+    let callSite: StackTraceElement
 }
 
 public protocol Executor {
-    func execute(operation: NetworkOperation,
+    func execute(operation: Operation,
                  context: CallContext,
                  data requestData: () throws -> Data?,
                  response: @escaping (Result<OperationResult, Error>) -> Void

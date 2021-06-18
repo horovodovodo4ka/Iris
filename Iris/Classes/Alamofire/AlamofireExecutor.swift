@@ -14,7 +14,7 @@ public struct AlamofireExecutor : Executor {
     public init() {}
     
     public func execute(
-        operation: NetworkOperation,
+        operation: Operation,
         context: CallContext,
         data requestData: () throws -> Data?,
         response: @escaping (Swift.Result<OperationResult, Error>) -> Void) throws -> OperationCancellation {
@@ -49,7 +49,7 @@ private struct PrinterWrapper : AlamofireActivityLogger.Printer {
         self.context = context
     }
 
-    func print(_ string: String, phase: Phase) {
+    func print(_ string: String, phase: AlamofireActivityLogger.Phase) {
         context.printer.print(string, phase: phase.networkOperationPhase, callSite: context.callSite)
     }
 }
@@ -61,7 +61,7 @@ private extension HTTPMethod {
 }
 
 extension AlamofireActivityLogger.Phase {
-    var networkOperationPhase: NetworkOperationPhase {
+    var networkOperationPhase: Phase {
         switch self {
             case .request:
                 return .request

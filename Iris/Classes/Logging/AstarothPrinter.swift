@@ -11,12 +11,12 @@ import Astaroth
 // swiftlint:disable:next identifier_name
 public let Network = StringTag("Network")
 
-public class AstarothPrinter: NetworkOperationPrinter {
+public class AstarothPrinter: Printer {
     public init() {}
     
     private var requestString: String = ""
     
-    public func print(_ string: String, phase: NetworkOperationPhase, callSite: StackTraceElement) {
+    public func print(_ string: String, phase: Phase, callSite: StackTraceElement) {
         switch phase {
             case .request:
                 requestString = string
@@ -35,6 +35,6 @@ public class AstarothPrinter: NetworkOperationPrinter {
 
 private extension StackTraceElement {
     var astaroth: Astaroth.StackTraceElement {
-        Astaroth.StackTraceElement(filename: filename, method: method, line: line, column: column)
+        Astaroth.StackTraceElement(filename: "", method: `where`, line: 0, column: 0)
     }
 }
