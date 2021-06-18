@@ -85,7 +85,6 @@ fileprivate struct StringsKeyedEncoding<Key: CodingKey>: KeyedEncodingContainerP
     var codingPath: [CodingKey] = []
 
     mutating func encodeNil(forKey key: Key) throws {
-        data.encode(key: codingPath + [key], value: "nil")
     }
 
     mutating func encode(_ value: Bool, forKey key: Key) throws {
@@ -209,7 +208,6 @@ fileprivate struct StringsUnkeyedEncoding: UnkeyedEncodingContainer {
     }
 
     mutating func encodeNil() throws {
-        data.encode(key: codingPath + [nextIndexedKey()], value: "nil")
     }
 
     mutating func encode(_ value: Bool) throws {
@@ -305,7 +303,6 @@ fileprivate struct StringsSingleValueEncoding: SingleValueEncodingContainer {
     var codingPath: [CodingKey] = []
 
     mutating func encodeNil() throws {
-        data.encode(key: codingPath, value: "nil")
     }
 
     mutating func encode(_ value: Bool) throws {
