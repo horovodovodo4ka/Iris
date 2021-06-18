@@ -7,13 +7,35 @@
 
 import Foundation
 
-/* Example of binding  methods to resources */
+// MARK: - shorthands for most frequently used methods
+
+public protocol GetOperation : ReadOperation {}
+public extension GetOperation {
+    var method: Get { Get() }
+}
+
+public protocol PostOperation : WriteOperation where Self: ReadOperation {}
+public extension PostOperation {
+    var method: Post { Post() }
+}
+
+public protocol PatchOperation : WriteOperation where Self: ReadOperation {}
+public extension PatchOperation {
+    var method: Patch { Patch() }
+}
+
+public protocol DeleteOperation : WriteOperation {}
+public extension DeleteOperation {
+    var method: Delete { Delete() }
+}
+
+//MARK: - statuses to resources mappings
 extension Get: RedableResourceHTTPMethod {}
 extension Post: CreatableResourceHTTPMethod {}
 extension Patch: UpdatableResourceHTTPMethod {}
 extension Delete: DeletableResourceHTTPMethod {}
 
-//MARK: -
+//MARK: - http status default validator
 
 public enum HTTPError: Error {
     case clientError(code: Int)

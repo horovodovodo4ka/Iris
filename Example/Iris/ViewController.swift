@@ -94,8 +94,8 @@ struct TestResource: Creatable {
 
 // operation
 
-struct TestOperation: ReadOperation, WriteOperation {
-    let method = Post()
+struct TestOperation: ReadOperation, WriteOperation, PostOperation {
+//    let method = Get()
 
     struct Request: Encodable {
         var id = 78912
