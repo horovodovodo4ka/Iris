@@ -59,6 +59,6 @@ Pod::Spec.new do |s|
 
   end
 
-  s.default_subspecs = 'Core' #, 'Logging', 'Alamofire'
+  s.default_subspecs = 'Core', 'Logging', 'Alamofire'
   
 end
