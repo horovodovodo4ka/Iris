@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
     Protocol based network abstraction layer.
                        DESC
 
-  s.homepage         = 'https://github.com/horovodovodo4ka/Iris-iOS'
+  s.homepage         = 'https://github.com/horovodovodo4ka/Iris'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'horovodovodo4ka' => 'xbitstream@gmail.com' }
   s.source           = { :git => 'https://github.com/horovodovodo4ka/Iris-iOS.git', :tag => s.version.to_s }
@@ -49,6 +49,8 @@ Pod::Spec.new do |s|
 
   s.subspec 'Defaults' do |sp|
       sp.source_files = 'Iris/Classes/Defaults/**/*.{swift}'
+
+      sp.dependency 'Iris-iOS/Core'
   end
 
   s.default_subspecs = 'Core', 'Logging', 'Alamofire'
