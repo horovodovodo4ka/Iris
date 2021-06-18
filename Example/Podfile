@@ -4,9 +4,8 @@ use_frameworks!
 platform :ios, '9.0'
 
 target 'Iris_Example' do
-  pod 'Iris', :path => '../'
-  pod 'Iris/Logging', :path => '../'
-  pod 'Iris/Alamofire', :path => '../'
+  pod 'Iris-iOS', :path => '../'
+  pod 'Iris-iOS/Defaults', :path => '../'
 
   target 'Iris_Tests' do
     inherit! :search_paths

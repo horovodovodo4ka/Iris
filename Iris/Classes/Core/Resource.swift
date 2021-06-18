@@ -11,6 +11,15 @@ public protocol Resource {
     var transport: Transport { get }
 }
 
+
+public protocol RedableResourceHTTPMethod { }
+
+public protocol CreatableResourceHTTPMethod { }
+
+public protocol UpdatableResourceHTTPMethod { }
+
+public protocol DeletableResourceHTTPMethod { }
+
 //
 
 public enum ResourceId<Id> {
@@ -21,8 +30,10 @@ public enum ResourceId<Id> {
 public protocol Readable: Resource {
     associatedtype ModelId
     associatedtype ModelType
-    associatedtype ReadOperationType: ReadOperation where
-        ReadOperationType.ResponseType == ModelType
+    associatedtype ReadOperationType: ReadOperation
+    where
+        ReadOperationType.ResponseType == ModelType,
+        ReadOperationType.MethodType: RedableResourceHTTPMethod
 
     func readOperation(_ resourceId: ResourceId<ModelId>) -> ReadOperationType
 }
@@ -38,7 +49,8 @@ public extension Readable {
 public protocol Listable: Resource {
     associatedtype ModelType
     associatedtype ListOperationType: ReadOperation where
-        ListOperationType.ResponseType == [ModelType]
+        ListOperationType.ResponseType == [ModelType],
+        ListOperationType.MethodType: RedableResourceHTTPMethod
 
     func listOperation() -> ListOperationType
 }
@@ -56,7 +68,8 @@ public protocol Creatable: Resource {
     associatedtype NewModelType // suppose that this is incomplete Model
     associatedtype CreateOperationType: ReadOperation & WriteOperation where
         CreateOperationType.ResponseType == ModelType,
-        CreateOperationType.RequestType == NewModelType
+        CreateOperationType.RequestType == NewModelType,
+        CreateOperationType.MethodType: CreatableResourceHTTPMethod
 
     func createOperation(_ model: NewModelType) -> CreateOperationType
 }
@@ -71,11 +84,12 @@ public extension Creatable {
 
 public protocol Updateable: Resource {
     associatedtype ModelType
-    associatedtype CreateOperationType: ReadOperation & WriteOperation where
-        CreateOperationType.ResponseType == ModelType,
-        CreateOperationType.RequestType == ModelType
+    associatedtype UpdateOperationType: ReadOperation & WriteOperation where
+        UpdateOperationType.ResponseType == ModelType,
+        UpdateOperationType.RequestType == ModelType,
+        UpdateOperationType.MethodType: CreatableResourceHTTPMethod
 
-    func createOperation(_ model: ModelType) -> CreateOperationType
+    func createOperation(_ model: ModelType) -> UpdateOperationType
 }
 
 public extension Updateable {
@@ -88,10 +102,11 @@ public extension Updateable {
 
 public protocol Deletable: Resource {
     associatedtype ModelType
-    associatedtype CreateOperationType: WriteOperation where
-        CreateOperationType.RequestType == ModelType
+    associatedtype DeleteOperationType: WriteOperation where
+        DeleteOperationType.RequestType == ModelType,
+        DeleteOperationType.MethodType: DeletableResourceHTTPMethod
 
-    func deleteOperation(_ model: ModelType) -> CreateOperationType
+    func deleteOperation(_ model: ModelType) -> DeleteOperationType
 }
 
 public extension Deletable {
@@ -99,3 +114,4 @@ public extension Deletable {
         transport.execute(deleteOperation(model), from: callSite)
     }
 }
+

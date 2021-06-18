@@ -16,9 +16,10 @@ public struct CallContext {
 }
 
 public protocol Executor {
-    func execute(operation: Operation,
-                 context: CallContext,
-                 data requestData: () throws -> Data?,
-                 response: @escaping (Result<OperationResult, Error>) -> Void
-    ) throws -> OperationCancellation
+    func execute<O: HTTPOperation>(
+        operation: O,
+        context: CallContext,
+        data requestData: () throws -> Data?,
+        response: @escaping (Swift.Result<OperationResult, Error>) -> Void
+    ) throws -> OperationCancellation 
 }

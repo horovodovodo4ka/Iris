@@ -45,7 +45,8 @@ public final class Transport {
     }
 
     @discardableResult
-    public func execute<ResponseType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<ResponseType> where O: ReadOperation, O.ResponseType == ResponseType {
+    public func execute<ResponseType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<ResponseType>
+    where O: ReadOperation, O.ResponseType == ResponseType {
 
         return execute(operation: operation,
                        data: { nil },
@@ -54,7 +55,8 @@ public final class Transport {
     }
 
     @discardableResult
-    public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<Void> where O: WriteOperation, O.RequestType == RequestType {
+    public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<Void>
+    where O: WriteOperation, O.RequestType == RequestType {
 
         return execute(operation: operation,
                        data: { try self.configuration.encoder.encode(operation.request) },
@@ -63,7 +65,8 @@ public final class Transport {
     }
 
     @discardableResult
-    public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<ResponseType> where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
+    public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement) -> Flow<ResponseType>
+    where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
 
         return execute(operation: operation,
                        data: { try self.configuration.encoder.encode(operation.request) },
@@ -73,10 +76,10 @@ public final class Transport {
 
     // MARK : - private
 
-    private func execute<ResponseType>(operation: Operation,
-                                       data requestData: @escaping () throws -> Data?,
-                                       response: @escaping (Data) throws -> ResponseType,
-                                       callSite: StackTraceElement) -> Flow<ResponseType> {
+    private func execute<ResponseType, O: HTTPOperation>(operation: O,
+                                                         data requestData: @escaping () throws -> Data?,
+                                                         response: @escaping (Data) throws -> ResponseType,
+                                                         callSite: StackTraceElement) -> Flow<ResponseType> {
 
         let logger = configuration.printer
 

@@ -13,8 +13,8 @@ import PromiseKit
 public struct AlamofireExecutor : Executor {
     public init() {}
     
-    public func execute(
-        operation: Operation,
+    public func execute<O: HTTPOperation>(
+        operation: O,
         context: CallContext,
         data requestData: () throws -> Data?,
         response: @escaping (Swift.Result<OperationResult, Error>) -> Void) throws -> OperationCancellation {
@@ -54,7 +54,7 @@ private struct PrinterWrapper : AlamofireActivityLogger.Printer {
     }
 }
 
-private extension HTTPMethod {
+private extension OperationMethod {
     var alamofire: Alamofire.HTTPMethod {
         return Alamofire.HTTPMethod(rawValue: self.rawValue)!
     }

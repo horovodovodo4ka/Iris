@@ -7,17 +7,11 @@
 
 import Foundation
 
-public extension ReadOperation {
-    var method: HTTPMethod { .get }
-}
-
-public extension WriteOperation {
-    var method: HTTPMethod { .post }
-}
-
-public extension WriteOperation where Self: ReadOperation {
-    var method: HTTPMethod { .post }
-}
+/* Example of binding  methods to resources */
+extension Get: RedableResourceHTTPMethod {}
+extension Post: CreatableResourceHTTPMethod {}
+extension Patch: UpdatableResourceHTTPMethod {}
+extension Delete: DeletableResourceHTTPMethod {}
 
 //MARK: -
 

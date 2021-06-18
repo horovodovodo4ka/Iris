@@ -13,15 +13,19 @@ public protocol Operation {
     var headers: [String: String] { get }
 
     var url: String { get }
-
-    var method: HTTPMethod { get }
 }
 
-public protocol ReadOperation: Operation {
+public protocol HTTPOperation : Operation {
+    associatedtype MethodType: OperationMethod
+
+    var method: MethodType { get }
+}
+
+public protocol ReadOperation: HTTPOperation {
     associatedtype ResponseType: Decodable
 }
 
-public protocol WriteOperation: Operation {
+public protocol WriteOperation: HTTPOperation {
     associatedtype RequestType: Encodable
 
     var request: RequestType { get }
@@ -29,14 +33,55 @@ public protocol WriteOperation: Operation {
 
 //////////
 
-public enum HTTPMethod: String {
-    case options = "OPTIONS"
-    case get     = "GET"
-    case head    = "HEAD"
-    case post    = "POST"
-    case put     = "PUT"
-    case patch   = "PATCH"
-    case delete  = "DELETE"
-    case trace   = "TRACE"
-    case connect = "CONNECT"
+public class OperationMethod {
+    fileprivate init(_ rawValue: String) {
+        self.rawValue = rawValue
+    }
+    public var rawValue: String
+}
+
+public final class Options : OperationMethod {
+    public init() {
+        super.init("OPTIONS")
+    }
+}
+public final class Get : OperationMethod {
+    public init() {
+        super.init("GET")
+    }
+}
+public final class Head : OperationMethod {
+    public init() {
+        super.init("HEAD")
+    }
+}
+public final class Post : OperationMethod {
+    public init() {
+        super.init("POST")
+    }
+}
+public final class Put : OperationMethod {
+    public init() {
+        super.init("PUT")
+    }
+}
+public final class Patch : OperationMethod {
+    public init() {
+        super.init("PATCH")
+    }
+}
+public final class Delete : OperationMethod {
+    public init() {
+        super.init("DELETE")
+    }
+}
+public final class Trace : OperationMethod {
+    public init() {
+        super.init("TRACE")
+    }
+}
+public final class Connect : OperationMethod {
+    public init() {
+        super.init("CONNECT")
+    }
 }

@@ -25,14 +25,16 @@ class ViewController: UIViewController {
 //            print($0)
 //        }
 
-        TestResource(transport: transport).read().tap {
-            print($0)
-        }
+        _ = TestResource(transport: transport)
+            .create(entity: TestOperation.Request())
+            .tap {
+                print($0)
+            }
 
         blah()
 
         let r = try! QueryString().encode(TestOperation.Request())
-
+        print(r)
     }
 
     private func blah() {
@@ -41,6 +43,7 @@ class ViewController: UIViewController {
         let st3: StackTraceElement = .source()
         let st4 = some
         let st5 = stat()
+        let st6 = { StackTraceElement.here() }()
     }
 
     var some: StackTraceElement {
@@ -76,15 +79,15 @@ extension Middleware {
 }
 
 // resource
+struct TestResource: Creatable {
 
-struct TestResource: Readable {
     typealias ModelId = Int
     typealias ModelType = TestOperation.Response
     typealias ReadOperationType = TestOperation
 
     let transport: Transport
 
-    func readOperation(_ resourceId: ResourceId<Int>) -> TestOperation {
+    func createOperation(_ model: TestOperation.Request) -> TestOperation {
         TestOperation()
     }
 }
@@ -92,6 +95,7 @@ struct TestResource: Readable {
 // operation
 
 struct TestOperation: ReadOperation, WriteOperation {
+    let method = Post()
 
     struct Request: Encodable {
         var id = 78912
