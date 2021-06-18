@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/horovodovodo4ka/Iris'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'horovodovodo4ka' => 'xbitstream@gmail.com' }
-  s.source           = { :git => 'https://github.com/horovodovodo4ka/Iris-iOS.git', :tag => s.version.to_s }
+  s.source           = { :git => 'https://github.com/horovodovodo4ka/Iris.git', :tag => s.version.to_s }
 
   s.module_name = 'Iris'
   s.ios.deployment_target = '9.0'
