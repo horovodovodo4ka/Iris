@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Iris'
-  s.version          = '1.0.1'
+  s.version          = '1.0.0'
   s.summary          = 'Protocol based network abstraction layer'
 
 # This description is used to generate tags and improve search results.
@@ -27,11 +27,10 @@ Pod::Spec.new do |s|
   s.source           = { :git => 'https://github.com/horovodovodo4ka/Iris.git', :tag => s.version.to_s }
 
   s.ios.deployment_target = '9.0'
+  s.swift_version = '5.4'
 
   s.subspec 'Core' do |sp|
     sp.source_files = 'Iris/Classes/Core/**/*.{swift}'
-
-    sp.dependency 'Iris/Util'
 
     sp.dependency 'PromiseKit', '~> 6.15.0'
     sp.dependency 'PromiseKit/Alamofire'
@@ -52,11 +51,6 @@ Pod::Spec.new do |s|
     sp.dependency 'Iris/Core'
 
     sp.dependency 'Astaroth', '~> 0.5.0'
-  end
-
-  s.subspec 'Util' do |sp|
-    sp.source_files = 'Iris/Classes/Util/**/*.{swift}'
-
   end
 
   s.default_subspecs = 'Core', 'Logging', 'Alamofire'

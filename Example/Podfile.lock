@@ -3,22 +3,20 @@ PODS:
   - AlamofireActivityLogger (2.5.0):
     - Alamofire (~> 4.7)
   - Astaroth (0.5.0)
-  - Iris (1.0.0):
-    - Iris/Alamofire (= 1.0.0)
-    - Iris/Core (= 1.0.0)
-    - Iris/Logging (= 1.0.0)
-  - Iris/Alamofire (1.0.0):
+  - Iris (1.0.2):
+    - Iris/Alamofire (= 1.0.2)
+    - Iris/Core (= 1.0.2)
+    - Iris/Logging (= 1.0.2)
+  - Iris/Alamofire (1.0.2):
     - Alamofire (~> 4.9.0)
     - AlamofireActivityLogger (~> 2.5.0)
     - Iris/Core
-  - Iris/Core (1.0.0):
-    - Iris/Util
+  - Iris/Core (1.0.2):
     - PromiseKit (~> 6.15.0)
     - PromiseKit/Alamofire
-  - Iris/Logging (1.0.0):
+  - Iris/Logging (1.0.2):
     - Astaroth (~> 0.5.0)
     - Iris/Core
-  - Iris/Util (1.0.0)
   - Nimble (9.2.0)
   - PromiseKit (6.15.3):
     - PromiseKit/CorePromise (= 6.15.3)
@@ -58,11 +56,11 @@ SPEC CHECKSUMS:
   Alamofire: 85e8a02c69d6020a0d734f6054870d7ecb75cf18
   AlamofireActivityLogger: 4dbb52cbd9a26590775df5d4d0284fa81f9b9b5b
   Astaroth: 5f57410934a28bb7d25350a4366680af13737d3d
-  Iris: fbf8f0fe4d1f6fcf869f3d3880169ed55fd45978
+  Iris: 698c9b63e0eadab1006dcee49bfeb0330403a5cf
   Nimble: 4f4a345c80b503b3ea13606a4f98405974ee4d0b
   PromiseKit: 3b2b6995e51a954c46dbc550ce3da44fbfb563c5
   Quick: 6473349e43b9271a8d43839d9ba1c442ed1b7ac4
 
-PODFILE CHECKSUM: 163c8da3a0492f6b9d67dcc97062c7d51c953131
+PODFILE CHECKSUM: 82a9c9aa9ec606e20f3f545144870731696c3cd1
 
 COCOAPODS: 1.10.1

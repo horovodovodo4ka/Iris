@@ -18,7 +18,7 @@ struct NetworkOperationError: Error, CustomStringConvertible {
 
         switch cause {
             case let e as DecodingError:
-                description = "[ResponseDecoding] \(e.description) @ \(String(data: source, encoding: .utf8))"
+                description = "[ResponseDecoding] \(e.description) @ \(String(data: source, encoding: .utf8) ?? "")"
             default:
                 description = "\(cause)"
         }
