@@ -20,6 +20,6 @@ public protocol Executor {
         operation: O,
         context: CallContext,
         data requestData: () throws -> Data?,
-        response: @escaping (Swift.Result<OperationResult, Error>) -> Void
-    ) throws -> OperationCancellation 
+        response: @escaping (Swift.Result<OperationResult, Swift.Error>) -> Void
+    ) throws -> OperationCancellation
 }

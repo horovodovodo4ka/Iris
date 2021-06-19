@@ -9,7 +9,7 @@ import Foundation
 import PromiseKit
 
 public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
-public typealias OparationHeaders = (Operation) -> [String : String]
+public typealias OparationHeaders = (Operation) -> [String: String]
 public typealias OperationRecover = (Operation, Error) throws -> Promise<Void>
 
 public struct RawOperationResult {
@@ -26,7 +26,7 @@ public struct Middleware {
         self.recover = recover
     }
 
-    let headers: (Operation) -> [String: String]
-    let validate: (Operation, RawOperationResult) throws -> Void
-    let recover: (Operation, Error) throws -> Promise<Void>
+    let headers: OparationHeaders
+    let validate: OperationValidator
+    let recover: OperationRecover
 }

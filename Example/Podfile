@@ -1,11 +1,14 @@
 source 'https://github.com/CocoaPods/Specs'
 use_frameworks!
+inhibit_all_warnings!
 
 platform :ios, '9.0'
 
 target 'Iris_Example' do
   pod 'Iris-iOS', :path => '../'
   pod 'Iris-iOS/Defaults', :path => '../'
+
+  pod 'SwiftLint'
 
   target 'Iris_Tests' do
     inherit! :search_paths

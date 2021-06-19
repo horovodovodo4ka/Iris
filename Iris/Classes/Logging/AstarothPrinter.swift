@@ -12,17 +12,30 @@ import Astaroth
 public let Network = StringTag("Network")
 
 public class AstarothPrinter: Printer {
-    public init() {}
-    
-    private var requestString: String = ""
-    
+
+    private let stringLimit: Int
+    public init(stringLimit: Int = .max) {
+        self.stringLimit = stringLimit
+    }
+
+    private var requestString: CustomStringConvertible = ""
+    private var responseString: CustomStringConvertible = ""
+
     public func print(_ string: String, phase: Phase, callSite: StackTraceElement) {
         switch phase {
             case .request:
-                requestString = string
+                requestString = string.prefix(stringLimit)
                 Log.d(Network, string, callSite.astaroth)
-            case .response(let success):
-                let string = "\(requestString)\n\(string)"
+            case .response(_):
+                responseString = string.prefix(stringLimit)
+//                let string = "\(requestString)\n\(string)"
+//                if success {
+//                    Log.i(Network, string, callSite.astaroth)
+//                } else {
+//                    Log.e(Network, string, callSite.astaroth)
+//                }
+            case .decoding(let success):
+                let string = "\(requestString)\n\(responseString)\n\(string)"
                 if success {
                     Log.i(Network, string, callSite.astaroth)
                 } else {
@@ -31,7 +44,6 @@ public class AstarothPrinter: Printer {
         }
     }
 }
-
 
 private extension StackTraceElement {
     var astaroth: Astaroth.StackTraceElement {

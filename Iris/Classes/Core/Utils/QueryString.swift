@@ -23,7 +23,7 @@ public class QueryString {
     }
 }
 
-fileprivate struct StringsEncoding: Encoder {
+private struct StringsEncoding: Encoder {
 
     /// Stores the actual strings file data during encoding.
     fileprivate final class Data {
@@ -53,7 +53,7 @@ fileprivate struct StringsEncoding: Encoder {
 
     var codingPath: [CodingKey] = []
 
-    let userInfo: [CodingUserInfoKey : Any] = [:]
+    let userInfo: [CodingUserInfoKey: Any] = [:]
 
     func container<Key: CodingKey>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> {
         var container = StringsKeyedEncoding<Key>(to: data)
@@ -74,7 +74,7 @@ fileprivate struct StringsEncoding: Encoder {
     }
 }
 
-fileprivate struct StringsKeyedEncoding<Key: CodingKey>: KeyedEncodingContainerProtocol {
+private struct StringsKeyedEncoding<Key: CodingKey>: KeyedEncodingContainerProtocol {
 
     private let data: StringsEncoding.Data
 
@@ -175,7 +175,7 @@ fileprivate struct StringsKeyedEncoding<Key: CodingKey>: KeyedEncodingContainerP
     }
 }
 
-fileprivate struct StringsUnkeyedEncoding: UnkeyedEncodingContainer {
+private struct StringsUnkeyedEncoding: UnkeyedEncodingContainer {
 
     private let data: StringsEncoding.Data
 
@@ -292,7 +292,7 @@ fileprivate struct StringsUnkeyedEncoding: UnkeyedEncodingContainer {
     }
 }
 
-fileprivate struct StringsSingleValueEncoding: SingleValueEncodingContainer {
+private struct StringsSingleValueEncoding: SingleValueEncodingContainer {
 
     private let data: StringsEncoding.Data
 

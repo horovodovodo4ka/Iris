@@ -65,7 +65,7 @@ func _stdlib_demangleImpl(
 
 public func _stdlib_demangleName(_ mangledName: String) -> String {
     return mangledName.utf8CString.withUnsafeBufferPointer {
-        (mangledNameUTF8CStr) in
+        mangledNameUTF8CStr in
 
         let demangledNamePtr = _stdlib_demangleImpl(
             mangledName: mangledNameUTF8CStr.baseAddress,

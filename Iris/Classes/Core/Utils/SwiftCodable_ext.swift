@@ -26,4 +26,3 @@ public let jsonDecoder: ResponseDecoder = {
     d.keyDecodingStrategy = .convertFromSnakeCase
     return d
 }()
-

@@ -19,7 +19,7 @@ private protocol AnyFlow: AnyObject {
 }
 
 // TODO replace this shit with async await when released
-//@available(*)
+// @available(*)
 public class Flow<ResponseType>: AnyFlow, Thenable {
     public typealias T = ResponseType
 
@@ -32,22 +32,22 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
     private init(host: Promise<ResponseType>,
                  transport: Transport,
                  context: Pending<Void> = Promise<Void>.pending(),
-                 cancellationCallback: @escaping () -> () = {}) {
+                 cancellationCallback: @escaping () -> Void = {}) {
 
         self.host = race(host.asVoid(), context.promise).map(on: nil) { host.value! }
         self.conext = context
         self.cancellationCallback = cancellationCallback
         self.transport = transport
 
-        self.host
-            .done { _ in
-                self.finalize()
-            }
-            .catch(policy: .allErrors) {
-                if $0.isCancelled {
-                    self.cancelChain()
-                }
-            }
+//        self.host
+//            .done { _ in
+//                self.finalize()
+//            }
+//            .catch(policy: .allErrors) {
+//                if $0.isCancelled {
+//                    self.cancelChain()
+//                }
+//            }
     }
 
     fileprivate convenience init(host: Promise<ResponseType>,
@@ -55,7 +55,7 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
                                  context: Pending<Void>,
                                  parent: AnyFlow) {
         self.init(host: host, transport: transport, context: context)
-        
+
         parent.children.append(self)
         self.parent = parent
     }
@@ -63,7 +63,7 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
     let transport: Transport
     private let host: Promise<ResponseType>
     private let conext: Pending<Void>
-    private let cancellationCallback: () -> ()
+    private let cancellationCallback: () -> Void
 
     fileprivate var parent: AnyFlow?
     fileprivate var children: [AnyFlow] = []
@@ -137,7 +137,7 @@ public extension Flow {
         return Flow<Void>(host: newHost, transport: transport, context: conext, parent: self)
     }
 
-    func `catch`(_ body: @escaping (Error) -> Void) -> Flow<Void> {
+    func `catch`(_ body: @escaping (Swift.Error) -> Void) -> Flow<Void> {
         let newHost = Promise<Void>.pending()
 
          host.pipe {
@@ -152,8 +152,13 @@ public extension Flow {
         return Flow<Void>(host: newHost.promise, transport: transport, context: conext, parent: self)
     }
 
-    func recover<C>(_ body: @escaping (Error) throws -> C) -> Flow<ResponseType> where C: Thenable, C.T == ResponseType {
+    func recover<C>(_ body: @escaping (Swift.Error) throws -> C) -> Flow<ResponseType> where C: Thenable, C.T == ResponseType {
         let newHost = host.recover(body)
+        return Flow<ResponseType>(host: newHost, transport: transport, context: conext, parent: self)
+    }
+
+    func tap(_ body: @escaping (Result<ResponseType>) -> Void) -> Flow<ResponseType> {
+        let newHost = host.tap(body)
         return Flow<ResponseType>(host: newHost, transport: transport, context: conext, parent: self)
     }
 }

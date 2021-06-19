@@ -11,7 +11,6 @@ public protocol Resource {
     var transport: Transport { get }
 }
 
-
 public protocol RedableResourceHTTPMethod { }
 
 public protocol CreatableResourceHTTPMethod { }
@@ -22,13 +21,13 @@ public protocol DeletableResourceHTTPMethod { }
 
 //
 
-public enum ResourceId<Id> {
+public enum ResourceId<Id: CustomStringConvertible> {
     case this
     case element(Id)
 }
 
 public protocol Readable: Resource {
-    associatedtype ModelId
+    associatedtype ModelId: CustomStringConvertible
     associatedtype ModelType
     associatedtype ReadOperationType: ReadOperation
     where
@@ -114,4 +113,3 @@ public extension Deletable {
         transport.execute(deleteOperation(model), from: callSite)
     }
 }
-

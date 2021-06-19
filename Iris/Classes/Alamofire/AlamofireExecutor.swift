@@ -10,14 +10,14 @@ import Alamofire
 import AlamofireActivityLogger
 import PromiseKit
 
-public struct AlamofireExecutor : Executor {
+public struct AlamofireExecutor: Executor {
     public init() {}
-    
+
     public func execute<O: HTTPOperation>(
         operation: O,
         context: CallContext,
         data requestData: () throws -> Data?,
-        response: @escaping (Swift.Result<OperationResult, Error>) -> Void) throws -> OperationCancellation {
+        response: @escaping (Swift.Result<OperationResult, Swift.Error>) -> Void) throws -> OperationCancellation {
 
         var urlRequest = try URLRequest(url: operation.url,
                                         method: operation.method.alamofire,
@@ -42,7 +42,7 @@ public struct AlamofireExecutor : Executor {
     }
 }
 
-private struct PrinterWrapper : AlamofireActivityLogger.Printer {
+private struct PrinterWrapper: AlamofireActivityLogger.Printer {
     let context: CallContext
 
     internal init(context: CallContext) {
