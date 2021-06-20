@@ -8,6 +8,7 @@
 
 import UIKit
 import Iris
+import PromiseKit
 
 class ViewController: UIViewController {
 
@@ -21,9 +22,13 @@ class ViewController: UIViewController {
 
         transport.add(middlware: .test)
 
-        transport.execute(TestOperation()).tap {
-            print($0)
-        }
+        transport.execute(TestOperation())
+            .done { _ in
+                print("success")
+            }
+            .catch {
+                print($0.localizedDescription)
+            }
 
 //        _ = TestResource(transport: transport)
 //            .create(entity: TestOperation.Request())
@@ -31,7 +36,7 @@ class ViewController: UIViewController {
 //                print($0)
 //            }
 
-        let e = BadStateError()
+        let e = BadStateError(cause: Exception(message: "Boo!\""))
 
         blah()
 
@@ -67,19 +72,22 @@ func stat() -> StackTraceElement {
 
 extension TransportConfig {
     static let `default` = TransportConfig(printer: AstarothPrinter(stringLimit: 200),
-                                           encoder: jsonEncoder,
-                                           decoder: jsonDecoder,
-                                           errorsVerbosers: [.decoding])
+                                           encoder: Json.encoder(),
+                                           decoder: Json.decoder())
 }
 
-import PromiseKit
+extension Recover {
+    static func retryAfter(seconds: TimeInterval) -> Recover {
+        Recover { _, _ in
+            after(seconds: seconds) .then { _ -> Promise<Void> in .value(()) }
+        }
+    }
+}
 
 extension Middleware {
     static let test = Middleware(
-        validate: statusCodeValidator,
-        recover: { _, _ in
-            after(seconds: 3) .then { _ -> Promise<Void> in .value(()) }
-        }
+        validate: .statusCode,
+        recover: .retryAfter(seconds: 3)
     )
 }
 
@@ -119,6 +127,7 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
 
     struct Response: Decodable {
         var success: String
+        var foo: Bool
     }
 
     typealias RequestType = Request

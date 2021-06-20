@@ -117,23 +117,11 @@ public class JsonPath<T: Decodable>: Decodable {
     }
 
     // public
-    public static func decode(from: Data, path: String? = nil) throws -> T {
-        let decoder = JSONDecoder()
-        // TODO - configurable from XXX?
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(JsonPath<T>.self, from: from).decode(path: path)
-    }
 
     public func decode(path: String?) throws -> T {
         guard let tokens = path?.jsonTokens(), !tokens.isEmpty else {
             return try decoder.singleValueContainer().decode(T.self)
         }
         return try decode(tokens)
-    }
-}
-
-public extension Decodable {
-    static func decode(from data: Data, path: String? = nil) throws -> Self {
-        return try JsonPath<Self>.decode(from: data, path: path)
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-open class Exception: Error {
+open class Exception: Error, CustomDebugStringConvertible, LocalizedError {
 
     public let message: String?
     public let cause: Swift.Error?
@@ -19,5 +19,28 @@ open class Exception: Error {
         self.context = context
     }
 
-    open var localizedDescription: String { message ?? String(describing: Self.self) }
+    open var errorDescription: String? {
+        message ?? cause?.localizedDescription ?? String(describing: Self.self)
+    }
+
+    open var debugDescription: String {
+        var nested = "nil"
+        if let cause = cause {
+            let offset = "\n    "
+            nested = offset + String(describing: cause).replacingOccurrences(of: "\n", with: offset)
+        }
+
+        var messageString = "nil"
+        if let message = message {
+            var escaped = message.replacingOccurrences(of: "\"", with: "\\\"")
+            escaped = escaped.replacingOccurrences(of: "\n", with: "\\n")
+            messageString = "\"\(escaped)\""
+        }
+
+        return """
+                ▿ \(String(describing: Self.self))
+                  - message: \(messageString)
+                  \(cause == nil ? "-" : "▿") cause: \(nested)
+                """
+    }
 }

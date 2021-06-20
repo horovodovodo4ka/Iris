@@ -13,15 +13,14 @@ import PromiseKit
 public struct AlamofireExecutor: Executor {
     public init() {}
 
-    public func execute<O: HTTPOperation>(
-        operation: O,
+    public func execute(
         context: CallContext,
         data requestData: () throws -> Data?,
         response: @escaping (Swift.Result<OperationResult, Swift.Error>) -> Void) throws -> OperationCancellation {
 
-        var urlRequest = try URLRequest(url: operation.url,
-                                        method: operation.method.alamofire,
-                                        headers: operation.headers)
+        var urlRequest = try URLRequest(url: context.url,
+                                        method: context.method.alamofire,
+                                        headers: context.headers)
 
         urlRequest.httpBody = try requestData()
 
