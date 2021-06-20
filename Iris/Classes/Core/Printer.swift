@@ -11,6 +11,8 @@ public protocol Printer: AnyObject {
     func print(_ string: String, phase: Phase, callSite: StackTraceElement)
 }
 
+// MARK: -
+
 public enum Phase {
     case request
     case response(success: Bool)

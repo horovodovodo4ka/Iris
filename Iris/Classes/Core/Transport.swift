@@ -8,32 +8,6 @@
 import Foundation
 import PromiseKit
 
-public protocol ResponseDecoder {
-    func decode<T>(_ type: T.Type, from data: Data) throws -> T where T: Decodable
-}
-
-public protocol RequestEncoder {
-    func encode<T>(_ value: T) throws -> Data where T: Encodable
-}
-
-public struct ErrorsVerboser {
-    let verboseError: (Error, Data?) -> String?
-}
-
-public struct TransportConfig {
-    public let printer: () -> Printer
-    public let encoder: RequestEncoder
-    public let decoder: ResponseDecoder
-    public let errorsVerbosers: [ErrorsVerboser]
-
-    public init(printer: @escaping @autoclosure () -> Printer, encoder: RequestEncoder, decoder: ResponseDecoder, errorsVerbosers: [ErrorsVerboser] = []) {
-        self.printer = printer
-        self.encoder = encoder
-        self.decoder = decoder
-        self.errorsVerbosers = errorsVerbosers
-    }
-}
-
 public final class Transport {
 
     public init(configuration: TransportConfig, executor: Executor) {
@@ -50,86 +24,136 @@ public final class Transport {
         middlewares.append(middlware)
     }
 
+
+    // MARK: - designated execution, only models
+    
     @discardableResult
     public func execute<ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<ResponseType>
     where O: ReadOperation, O.ResponseType == ResponseType {
-
-        return execute(operation: operation,
-                       data: { nil },
-                       response: { try self.configuration.decoder.decode(ResponseType.self, from: $0) },
-                       callSite: callSite)
+        executeWithMeta(operation, from: callSite).map { $0.model }
     }
 
     @discardableResult
     public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<Void>
     where O: WriteOperation, O.RequestType == RequestType {
-
-        return execute(operation: operation,
-                       data: { try self.configuration.encoder.encode(operation.request) },
-                       response: { _ in () },
-                       callSite: callSite)
+        executeWithMeta(operation, from: callSite).map { $0.model }
     }
 
     @discardableResult
     public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<ResponseType>
     where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
+        executeWithMeta(operation, from: callSite).map { $0.model }
+    }
 
-        return execute(operation: operation,
-                       data: { try self.configuration.encoder.encode(operation.request) },
-                       response: { try self.configuration.decoder.decode(ResponseType.self, from: $0) },
-                       callSite: callSite)
+    // MARK: - extended execution with headers
+
+    @discardableResult
+    public func executeWithMeta<ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<MetaResponse<ResponseType>>
+    where O: ReadOperation, O.ResponseType == ResponseType {
+
+        execute(operation: operation,
+                data: { nil },
+                response: { try self.decode(operation: operation, data: $0) },
+                callSite: callSite)
+    }
+
+    @discardableResult
+    public func executeWithMeta<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<MetaResponse<Void>>
+    where O: WriteOperation, O.RequestType == RequestType {
+
+        execute(operation: operation,
+                data: { try self.encode(operation: operation) },
+                response: { _ in () },
+                callSite: callSite)
+    }
+
+
+    @discardableResult
+    public func executeWithMeta<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<MetaResponse<ResponseType>>
+    where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
+
+        execute(operation: operation,
+                data: { try self.encode(operation: operation) },
+                response: { try self.decode(operation: operation, data: $0) },
+                callSite: callSite)
     }
 
     // MARK: - private
 
-    private func execute<ResponseType, O: HTTPOperation>(operation: O,
-                                                         data requestData: @escaping () throws -> Data?,
-                                                         response: @escaping (Data) throws -> ResponseType,
-                                                         callSite: StackTraceElement) -> Flow<ResponseType> {
+    private func encode<O: WriteOperation>(operation: O) throws -> Data? {
+        let encoder = self.configuration.encoder()
+
+        return try encoder.encode(operation.request)
+    }
+
+    private func decode<O: ReadOperation>(operation: O, data: Data) throws -> O.ResponseType {
+        let decoder = self.configuration.decoder()
+
+        if let traverser = decoder as? ResponseTraversalDecoder,
+           let traversable = operation as? IndirectModelOperation {
+
+            return try traverser.decode(O.ResponseType.self, from: data, at: traversable.responseRelativePath)
+        } else {
+
+            return try decoder.decode(O.ResponseType.self, from: data)
+        }
+    }
+
+    private func execute<ResponseType, O: HTTPOperation>(
+        operation: O,
+        data requestData: @escaping EncodingLambda,
+        response: @escaping DecodingLambda<ResponseType>,
+        callSite: StackTraceElement) -> Flow<MetaResponse<ResponseType>> {
 
         let logger = configuration.printer()
 
+        let headers = middlewares
+            .compactMap { $0.headers }
+            .reduce([:]) { result, headers in
+                result.merging(headers(operation: operation)) { _, new in new }
+            }
+            .merging(operation.headers) { _, new in new }
+
+        let context = CallContext(url: operation.url,
+                                  method: operation.method,
+                                  headers: headers,
+                                  printer: logger,
+                                  callSite: callSite)
+
         let flow = Flow<OperationResult>(transport: self) { seal in
-            try executor
-                .execute(operation: operation,
-                         context: CallContext(printer: logger, callSite: callSite),
-                         data: requestData) { result in
-                    switch result {
-                        case .success(let data):
-                            seal.fulfill(data)
-                        case .failure(let error):
-                            seal.reject(error)
-                    }
+            try executor.execute(context: context, data: requestData) { result in
+                switch result {
+                    case .success(let data):
+                        seal.fulfill(data)
+                    case .failure(let error):
+                        seal.reject(error)
                 }
+            }
         }
         .map { result in
-            do {
                 let rawResult = RawOperationResult(response: result.response, data: result.data)
 
-                for validator in self.middlewares {
-                    try validator.validate(operation, rawResult)
+                for validator in self.middlewares.compactMap { $0.validate } {
+                    try validator(operation: operation, result: rawResult)
                 }
 
                 let ret = try response(result.data)
 
                 logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
 
-                return ret
-
-            } catch {
-                throw NetworkOperationError(cause: error, source: result.data)
-            }
+            return MetaResponse(model: ret, headers: rawResult.response.allHeaderFields)
         }
-        .recover { e -> Promise<ResponseType> in
-            let error = self.wrap(error: e, callSite: callSite)
+        .recover { e -> Promise<MetaResponse<ResponseType>> in
 
-            logger.print(error.message ?? "Error", phase: .decoding(success: false), callSite: callSite)
+            let error = Exception(cause: e, context: callSite)
+
+            logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
 
             throw error
         }
 
         return flow
-            .recover { e -> Flow<ResponseType> in
+            .recover { e -> Flow<MetaResponse<ResponseType>> in
                 let error = e as! Exception
 
                 return self
@@ -138,34 +162,6 @@ public final class Transport {
                         self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
                     }
             }
-    }
-
-    private func wrap(error: Error, callSite: StackTraceElement) -> Exception {
-        let cause: Error
-        let data: Data?
-
-        if let error = error as? NetworkOperationError {
-            cause = error.cause
-            data = error.source
-        } else {
-            cause = error
-            data = nil
-
-        }
-
-        var message: String!
-        for verboser in self.configuration.errorsVerbosers {
-            if let verbosed = verboser.verboseError(cause, data) {
-                message = verbosed
-                break
-            }
-        }
-
-        if message == nil {
-            message = cause.localizedDescription
-        }
-
-        return Exception(message: message, cause: cause, context: callSite)
     }
 
     // middlewares recover section chaining
@@ -177,15 +173,15 @@ public final class Transport {
             return Flow(transport: self, promise: Promise(error: error))
         }
 
-        func safePromise(_ block: OperationRecover) -> Promise<Void> {
+        func safePromise(_ block: Recover) -> Promise<Void> {
             do {
-                return try block(operation, cause)
+                return try block(operation: operation, error: cause)
             } catch {
                 return Promise(error: cause)
             }
         }
 
-        let lazyPromises = middlewares.map { $0.recover }.lazy.map(safePromise(_:))
+        let lazyPromises = middlewares.compactMap { $0.recover }.lazy.map(safePromise(_:))
 
         var it = lazyPromises.makeIterator()
 
@@ -211,18 +207,44 @@ public final class Transport {
         }
 
         return next().recover { e -> Promise<Void> in
-            throw self.wrap(error: e, callSite: error.context)
+            throw Exception(cause: e, context: error.context)
         }
     }
 }
 
-// MAKR: - tools
-private struct NetworkOperationError: Swift.Error {
-    let cause: Swift.Error
-    let source: Data
+// MARK: -
 
-    init(cause: Swift.Error, source: Data) {
-        self.cause = cause
-        self.source = source
+typealias EncodingLambda = () throws -> Data?
+typealias DecodingLambda<ResponseType> = (Data) throws -> ResponseType
+
+public protocol RequestEncoder {
+    func encode<T>(_ value: T) throws -> Data where T: Encodable
+}
+
+public protocol ResponseDecoder {
+    func decode<T>(_ type: T.Type, from data: Data) throws -> T where T: Decodable
+}
+
+public protocol ResponseTraversalDecoder: ResponseDecoder {
+    func decode<T>(_ type: T.Type, from data: Data, at path: String) throws -> T where T: Decodable
+}
+
+public struct TransportConfig {
+    public let printer: () -> Printer
+    public let encoder: () -> RequestEncoder
+    public let decoder: () -> ResponseDecoder
+
+    public init(printer: @escaping @autoclosure () -> Printer,
+                encoder: @escaping @autoclosure () -> RequestEncoder,
+                decoder: @escaping @autoclosure () -> ResponseDecoder) {
+
+        self.printer = printer
+        self.encoder = encoder
+        self.decoder = decoder
     }
+}
+
+public struct MetaResponse<Response> {
+    let model: Response
+    let headers: [AnyHashable: Any]
 }

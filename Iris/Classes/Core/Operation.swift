@@ -9,14 +9,14 @@ import Foundation
 import PromiseKit
 
 public protocol Operation {
-    var headers: [String: String] { get }
-
     var url: String { get }
 }
 
 public protocol HTTPOperation: Operation {
     associatedtype MethodType: OperationMethod
 
+    var headers: [String: String] { get }
+    
     var method: MethodType { get }
 }
 
@@ -30,7 +30,13 @@ public protocol WriteOperation: HTTPOperation {
     var request: RequestType { get }
 }
 
-//////////
+//
+
+public protocol IndirectModelOperation {
+    var responseRelativePath: String { get }
+}
+
+//
 
 public class OperationMethod {
     fileprivate init(_ rawValue: String) {
