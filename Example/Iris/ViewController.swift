@@ -24,7 +24,7 @@ class ViewController: UIViewController {
 
         transport.execute(TestOperation())
             .done { v in
-                print("success")
+                print(v)
             }
             .catch { e in
                 print(e.localizedDescription)
@@ -145,9 +145,9 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
     }
 }
 
-//extension TestOperation: IndirectModelOperation {
+// extension TestOperation: IndirectModelOperation {
 //    var responseRelativePath: String { ".success" }
-//}
+// }
 
 typealias Exception = Iris.Exception
 

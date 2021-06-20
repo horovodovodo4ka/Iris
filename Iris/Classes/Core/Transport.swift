@@ -24,8 +24,31 @@ public final class Transport {
         middlewares.append(middlware)
     }
 
+
+    // MARK: - designated execution, only models
+    
     @discardableResult
     public func execute<ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<ResponseType>
+    where O: ReadOperation, O.ResponseType == ResponseType {
+        executeWithMeta(operation, from: callSite).map { $0.model }
+    }
+
+    @discardableResult
+    public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<Void>
+    where O: WriteOperation, O.RequestType == RequestType {
+        executeWithMeta(operation, from: callSite).map { $0.model }
+    }
+
+    @discardableResult
+    public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<ResponseType>
+    where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
+        executeWithMeta(operation, from: callSite).map { $0.model }
+    }
+
+    // MARK: - extended execution with headers
+
+    @discardableResult
+    public func executeWithMeta<ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<MetaResponse<ResponseType>>
     where O: ReadOperation, O.ResponseType == ResponseType {
 
         execute(operation: operation,
@@ -35,7 +58,7 @@ public final class Transport {
     }
 
     @discardableResult
-    public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<Void>
+    public func executeWithMeta<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<MetaResponse<Void>>
     where O: WriteOperation, O.RequestType == RequestType {
 
         execute(operation: operation,
@@ -44,8 +67,9 @@ public final class Transport {
                 callSite: callSite)
     }
 
+
     @discardableResult
-    public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<ResponseType>
+    public func executeWithMeta<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<MetaResponse<ResponseType>>
     where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
 
         execute(operation: operation,
@@ -79,7 +103,7 @@ public final class Transport {
         operation: O,
         data requestData: @escaping EncodingLambda,
         response: @escaping DecodingLambda<ResponseType>,
-        callSite: StackTraceElement) -> Flow<ResponseType> {
+        callSite: StackTraceElement) -> Flow<MetaResponse<ResponseType>> {
 
         let logger = configuration.printer()
 
@@ -117,9 +141,9 @@ public final class Transport {
 
                 logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
 
-                return ret
+            return MetaResponse(model: ret, headers: rawResult.response.allHeaderFields)
         }
-        .recover { e -> Promise<ResponseType> in
+        .recover { e -> Promise<MetaResponse<ResponseType>> in
 
             let error = Exception(cause: e, context: callSite)
 
@@ -129,7 +153,7 @@ public final class Transport {
         }
 
         return flow
-            .recover { e -> Flow<ResponseType> in
+            .recover { e -> Flow<MetaResponse<ResponseType>> in
                 let error = e as! Exception
 
                 return self
@@ -218,4 +242,9 @@ public struct TransportConfig {
         self.encoder = encoder
         self.decoder = decoder
     }
+}
+
+public struct MetaResponse<Response> {
+    let model: Response
+    let headers: [AnyHashable: Any]
 }
