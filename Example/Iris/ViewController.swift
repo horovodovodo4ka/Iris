@@ -20,14 +20,14 @@ class ViewController: UIViewController {
             configuration: .default,
             executor: AlamofireExecutor())
 
-        transport.add(middlware: .test)
+//        transport.add(middlware: .test)
 
         transport.execute(TestOperation())
-            .done { _ in
+            .done { v in
                 print("success")
             }
-            .catch {
-                print($0.localizedDescription)
+            .catch { e in
+                print(e.localizedDescription)
             }
 
 //        _ = TestResource(transport: transport)
@@ -71,9 +71,11 @@ func stat() -> StackTraceElement {
 // transport
 
 extension TransportConfig {
-    static let `default` = TransportConfig(printer: AstarothPrinter(stringLimit: 200),
-                                           encoder: Json.encoder(),
-                                           decoder: Json.decoder())
+    static let `default` = TransportConfig(
+        printer: AstarothPrinter(stringLimit: 200),
+        encoder: Json.encoder,
+        decoder: Json.decoder
+    )
 }
 
 extension Recover {
@@ -93,13 +95,11 @@ extension Middleware {
 
 // resource
 struct TestResource: Creatable {
-
-    typealias ModelType = TestOperation.Response
-    typealias ReadOperationType = TestOperation
-
     let transport: Transport
 
-    func createOperation(_ model: TestOperation.Request) -> TestOperation {
+    typealias ModelType = TestOperation.ResponseType
+
+    func createOperation(_ model: TestOperation.RequestType) -> TestOperation {
         TestOperation()
     }
 }
@@ -107,6 +107,7 @@ struct TestResource: Creatable {
 // operation
 
 struct TestOperation: ReadOperation, WriteOperation, PostOperation {
+
 //    let method = Get()
 
     struct Request: Encodable {
@@ -114,12 +115,12 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
         var customer = "Jason Sweet[ ? # ]"
         var quantity = 1
         var price = 18.00
-        var testA = A()
+        var testABC = ABC()
         var nexting = [[1], [2, 3], [4, 5, 6]]
         var testArr = [1, 2, 3]
         var testDict = ["a": 1, "b": 2, "c[]": 3]
 
-        struct A: Encodable {
+        struct ABC: Encodable {
             var b = 1
             var c = "a[]"
         }
@@ -127,7 +128,7 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
 
     struct Response: Decodable {
         var success: String
-        var foo: Bool
+//        var foo: Bool
     }
 
     typealias RequestType = Request
@@ -135,14 +136,18 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
 
     var headers: [String: String] { [:] }
 
-//    var url: String { "https://reqbin.com/echo/post/json" }
-    var url: String { "https://google.ru" }
+    var url: String { "https://reqbin.com/echo/post/json" }
+//    var url: String { "https://google.ru" }
 //    var url: String { "https://exampleqqq.com" }
 
     var request: Request {
         Request()
     }
 }
+
+//extension TestOperation: IndirectModelOperation {
+//    var responseRelativePath: String { ".success" }
+//}
 
 typealias Exception = Iris.Exception
 
