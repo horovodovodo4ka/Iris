@@ -45,49 +45,21 @@ public enum HTTPError: Swift.Error, LocalizedError {
     public var errorDescription: String? { "\(self)" }
 }
 
-public let statusCodeValidator: OperationValidator = {
-    let statusCode = $1.response.statusCode
+public extension Validator {
+    public static var statusCode: Validator {
+        Validator {
+            let statusCode = $1.response.statusCode
 
-    switch statusCode {
-        case 100..<300:
-            return
-        case 400..<500:
-            throw HTTPError.clientError(code: statusCode)
-        case 500..<600:
-            throw HTTPError.serverError(code: statusCode)
-        default:
-            throw HTTPError.unknownResponseCode(code: statusCode)
-    }
-}
-
-// MARK: - decoding error verboser
-
-public extension ErrorsVerboser {
-    static let decoding = ErrorsVerboser { e, _ in
-        (e as? DecodingError)?.description
-    }
-}
-
-private extension DecodingError {
-    var description: String {
-        switch self {
-            case .typeMismatch(let reason, _):
-                return "[Decoding error] \(reason)"
-            case .valueNotFound(let reason, _):
-                return "[Decoding error] \(reason)"
-            case .keyNotFound(let reason, _):
-                return "[Decoding error] \(reason)"
-            case .dataCorrupted(let context):
-                return "[Decoding error] \(context.debugDescription)"
-            @unknown default:
-                return localizedDescription
+            switch statusCode {
+                case 100..<300:
+                    return
+                case 400..<500:
+                    throw HTTPError.clientError(code: statusCode)
+                case 500..<600:
+                    throw HTTPError.serverError(code: statusCode)
+                default:
+                    throw HTTPError.unknownResponseCode(code: statusCode)
+            }
         }
     }
 }
-//
-//
-// public extension ErrorsVerboser {
-//    public static let nsError = ErrorsVerboser { e, data in
-//        (e as? NSError)?.description
-//    }
-// }

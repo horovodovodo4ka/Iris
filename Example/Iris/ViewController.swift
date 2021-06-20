@@ -8,6 +8,7 @@
 
 import UIKit
 import Iris
+import PromiseKit
 
 class ViewController: UIViewController {
 
@@ -19,11 +20,16 @@ class ViewController: UIViewController {
             configuration: .default,
             executor: AlamofireExecutor())
 
-        transport.add(middlware: .test)
+//        transport.add(middlware: .test)
 
-        transport.execute(TestOperation()).tap {
-            print($0)
-        }
+        transport.executeWithMeta(TestOperation())
+            .done { v in
+                print(v.model)
+                print(v.headers)
+            }
+            .catch { e in
+                print(e.localizedDescription)
+            }
 
 //        _ = TestResource(transport: transport)
 //            .create(entity: TestOperation.Request())
@@ -31,7 +37,7 @@ class ViewController: UIViewController {
 //                print($0)
 //            }
 
-        let e = BadStateError()
+        let e = BadStateError(cause: Exception(message: "Boo!\""))
 
         blah()
 
@@ -66,32 +72,35 @@ func stat() -> StackTraceElement {
 // transport
 
 extension TransportConfig {
-    static let `default` = TransportConfig(printer: AstarothPrinter(stringLimit: 200),
-                                           encoder: jsonEncoder,
-                                           decoder: jsonDecoder,
-                                           errorsVerbosers: [.decoding])
+    static let `default` = TransportConfig(
+        printer: AstarothPrinter(stringLimit: 200),
+        encoder: Json.encoder,
+        decoder: Json.decoder
+    )
 }
 
-import PromiseKit
+extension Recover {
+    static func retryAfter(seconds: TimeInterval) -> Recover {
+        Recover { _, _ in
+            after(seconds: seconds) .then { _ -> Promise<Void> in .value(()) }
+        }
+    }
+}
 
 extension Middleware {
     static let test = Middleware(
-        validate: statusCodeValidator,
-        recover: { _, _ in
-            after(seconds: 3) .then { _ -> Promise<Void> in .value(()) }
-        }
+        validate: .statusCode,
+        recover: .retryAfter(seconds: 3)
     )
 }
 
 // resource
 struct TestResource: Creatable {
-
-    typealias ModelType = TestOperation.Response
-    typealias ReadOperationType = TestOperation
-
     let transport: Transport
 
-    func createOperation(_ model: TestOperation.Request) -> TestOperation {
+    typealias ModelType = TestOperation.ResponseType
+
+    func createOperation(_ model: TestOperation.RequestType) -> TestOperation {
         TestOperation()
     }
 }
@@ -99,6 +108,7 @@ struct TestResource: Creatable {
 // operation
 
 struct TestOperation: ReadOperation, WriteOperation, PostOperation {
+
 //    let method = Get()
 
     struct Request: Encodable {
@@ -106,12 +116,12 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
         var customer = "Jason Sweet[ ? # ]"
         var quantity = 1
         var price = 18.00
-        var testA = A()
+        var testABC = ABC()
         var nexting = [[1], [2, 3], [4, 5, 6]]
         var testArr = [1, 2, 3]
         var testDict = ["a": 1, "b": 2, "c[]": 3]
 
-        struct A: Encodable {
+        struct ABC: Encodable {
             var b = 1
             var c = "a[]"
         }
@@ -119,6 +129,7 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
 
     struct Response: Decodable {
         var success: String
+//        var foo: Bool
     }
 
     typealias RequestType = Request
@@ -126,14 +137,18 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
 
     var headers: [String: String] { [:] }
 
-//    var url: String { "https://reqbin.com/echo/post/json" }
-    var url: String { "https://google.ru" }
+    var url: String { "https://reqbin.com/echo/post/json" }
+//    var url: String { "https://google.ru" }
 //    var url: String { "https://exampleqqq.com" }
 
     var request: Request {
         Request()
     }
 }
+
+// extension TestOperation: IndirectModelOperation {
+//    var responseRelativePath: String { ".success" }
+// }
 
 typealias Exception = Iris.Exception
 

@@ -39,15 +39,15 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
         self.cancellationCallback = cancellationCallback
         self.transport = transport
 
-//        self.host
-//            .done { _ in
-//                self.finalize()
-//            }
-//            .catch(policy: .allErrors) {
-//                if $0.isCancelled {
-//                    self.cancelChain()
-//                }
-//            }
+        self.host
+            .done { _ in
+                self.finalize()
+            }
+            .catch(policy: .allErrors) {
+                if $0.isCancelled {
+                    self.cancelChain()
+                }
+            }
     }
 
     fileprivate convenience init(host: Promise<ResponseType>,
