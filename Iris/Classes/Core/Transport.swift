@@ -89,8 +89,10 @@ public final class Transport {
     private func decode<O: ReadOperation>(operation: O, data: Data) throws -> O.ResponseType {
         let decoder = self.configuration.decoder()
 
-        if let traverser = decoder as? ResponseTraversalDecoder,
-           let traversable = operation as? IndirectModelOperation {
+        if let traversable = operation as? IndirectModelOperation {
+            guard let traverser = decoder as? ResponseTraversalDecoder else {
+                throw TransportError.indirectRequiresTraverser(type(of: traversable), type(of: decoder))
+            }
 
             return try traverser.decode(O.ResponseType.self, from: data, at: traversable.responseRelativePath)
         } else {
@@ -214,6 +216,19 @@ public final class Transport {
 
 // MARK: -
 
+public enum TransportError: Swift.Error, LocalizedError {
+    case indirectRequiresTraverser(IndirectModelOperation.Type, ResponseDecoder.Type)
+
+    public var errorDescription: String? {
+        switch self {
+            case .indirectRequiresTraverser(let operation, let decoder):
+                return "\(operation) requires ResponseTraversalDecoder for parsing. \(decoder) is used."
+            default:
+                return "\(self)"
+        }
+    }
+}
+
 typealias EncodingLambda = () throws -> Data?
 typealias DecodingLambda<ResponseType> = (Data) throws -> ResponseType
 
@@ -245,6 +260,6 @@ public struct TransportConfig {
 }
 
 public struct MetaResponse<Response> {
-    let model: Response
-    let headers: [AnyHashable: Any]
+    public let model: Response
+    public let headers: [AnyHashable: Any]
 }

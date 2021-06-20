@@ -22,9 +22,10 @@ class ViewController: UIViewController {
 
 //        transport.add(middlware: .test)
 
-        transport.execute(TestOperation())
+        transport.executeWithMeta(TestOperation())
             .done { v in
-                print(v)
+                print(v.model)
+                print(v.headers)
             }
             .catch { e in
                 print(e.localizedDescription)
