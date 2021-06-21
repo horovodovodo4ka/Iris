@@ -24,7 +24,6 @@ public final class Transport {
         middlewares.append(middlware)
     }
 
-
     // MARK: - designated execution, only models
     
     @discardableResult
@@ -66,7 +65,6 @@ public final class Transport {
                 response: { _ in () },
                 callSite: callSite)
     }
-
 
     @discardableResult
     public func executeWithMeta<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<MetaResponse<ResponseType>>
@@ -136,7 +134,7 @@ public final class Transport {
             let headers = Headers(raw: result.response.allHeaderFields)
             let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
 
-            for validator in self.middlewares.flatMap { $0.validate } {
+            for validator in self.middlewares.flatMap({ $0.validate }) {
                 try validator(operation: operation, result: rawResult)
             }
 
@@ -226,8 +224,8 @@ public enum TransportError: Swift.Error, LocalizedError {
         switch self {
             case .indirectRequiresTraverser(let operation, let decoder):
                 return "<\(operation)> requires ResponseTraversalDecoder for parsing. <\(decoder)> is used."
-            default:
-                return "\(self)"
+//            @unknown default:
+//                return "\(self)"
         }
     }
 }

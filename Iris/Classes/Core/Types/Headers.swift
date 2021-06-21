@@ -56,5 +56,5 @@ public struct Headers {
 }
 
 public extension Headers {
-    public static let empty = Self([:])
+    static let empty = Self([:])
 }

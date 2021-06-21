@@ -75,11 +75,11 @@ public class NoopPrinter: Printer {
 // MARK: - HTTP headers
 
 public extension HeaderKey {
-    public static func custom(_ name: String) -> Self { Self(name: name) }
+    static func custom(_ name: String) -> Self { Self(name: name) }
     
-    public static let authorization = Self(name: "Authorization")
-    public static let contentType = Self(name: "Content-Type")
-    public static let retryAfter = Self(name: "Retry-After")
-    public static let contentEncoding = Self(name: "Content-Encoding")
-    public static let contentLength = Self(name: "Content-Length")
+    static let authorization = Self(name: "Authorization")
+    static let contentType = Self(name: "Content-Type")
+    static let retryAfter = Self(name: "Retry-After")
+    static let contentEncoding = Self(name: "Content-Encoding")
+    static let contentLength = Self(name: "Content-Length")
 }

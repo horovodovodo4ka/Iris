@@ -22,14 +22,13 @@ public struct Middleware {
 
 // MARK: -
 
-
 public typealias RawOperationResult = (response: HTTPURLResponse, headers: Headers, data: Data)
 public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
 public typealias OparationHeaders = (Operation) -> Iris.Headers
 public typealias OperationRecover = (Operation, Error) throws -> Promise<Void>
 
 public extension Middleware {
-    public struct RequestHeaders {
+    struct RequestHeaders {
         private let headers: OparationHeaders
         public init(_ headers: @escaping OparationHeaders) {
             self.headers = headers
@@ -40,7 +39,7 @@ public extension Middleware {
         }
     }
 
-    public struct Validator {
+    struct Validator {
         private let validate: OperationValidator
         public init(_ validate: @escaping OperationValidator) {
             self.validate = validate
@@ -51,7 +50,7 @@ public extension Middleware {
         }
     }
 
-    public struct Recover {
+    struct Recover {
         private let recover: OperationRecover
         public init(_ recover: @escaping OperationRecover) {
             self.recover = recover
