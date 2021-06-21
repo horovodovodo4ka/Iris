@@ -3,20 +3,20 @@ PODS:
   - AlamofireActivityLogger (2.5.0):
     - Alamofire (~> 4.7)
   - Astaroth (0.5.0)
-  - Iris-iOS (1.1.0):
-    - Iris-iOS/Alamofire (= 1.1.0)
-    - Iris-iOS/Core (= 1.1.0)
-    - Iris-iOS/Logging (= 1.1.0)
-  - Iris-iOS/Alamofire (1.1.0):
+  - Iris-iOS (1.3.0):
+    - Iris-iOS/Alamofire (= 1.3.0)
+    - Iris-iOS/Core (= 1.3.0)
+    - Iris-iOS/Logging (= 1.3.0)
+  - Iris-iOS/Alamofire (1.3.0):
     - Alamofire (~> 4.9.0)
     - AlamofireActivityLogger (~> 2.5.0)
     - Iris-iOS/Core
-  - Iris-iOS/Core (1.1.0):
+  - Iris-iOS/Core (1.3.0):
     - PromiseKit (~> 6.15.0)
     - PromiseKit/Alamofire
-  - Iris-iOS/Defaults (1.1.0):
+  - Iris-iOS/Defaults (1.3.0):
     - Iris-iOS/Core
-  - Iris-iOS/Logging (1.1.0):
+  - Iris-iOS/Logging (1.3.0):
     - Astaroth (~> 0.5.0)
     - Iris-iOS/Core
   - Nimble (9.2.0)
@@ -38,7 +38,7 @@ PODS:
 DEPENDENCIES:
   - Iris-iOS (from `../`)
   - Iris-iOS/Defaults (from `../`)
-  - Nimble
+  - Nimble (from `https://github.com/Quick/Nimble`, branch `main`)
   - Quick
   - SwiftLint
 
@@ -47,7 +47,6 @@ SPEC REPOS:
     - Alamofire
     - AlamofireActivityLogger
     - Astaroth
-    - Nimble
     - PromiseKit
     - Quick
     - SwiftLint
@@ -55,17 +54,25 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Iris-iOS:
     :path: "../"
+  Nimble:
+    :branch: main
+    :git: https://github.com/Quick/Nimble
+
+CHECKOUT OPTIONS:
+  Nimble:
+    :commit: 92dd63d2dbd9bf5ef733e83febc94f035004573e
+    :git: https://github.com/Quick/Nimble
 
 SPEC CHECKSUMS:
   Alamofire: 85e8a02c69d6020a0d734f6054870d7ecb75cf18
   AlamofireActivityLogger: 4dbb52cbd9a26590775df5d4d0284fa81f9b9b5b
   Astaroth: 5f57410934a28bb7d25350a4366680af13737d3d
-  Iris-iOS: 3793faf9d9b170c4b42f7adfb638bb7ae3c5296d
+  Iris-iOS: fea6413c823e641e4833b727c475d1efcbc394ca
   Nimble: 4f4a345c80b503b3ea13606a4f98405974ee4d0b
   PromiseKit: 3b2b6995e51a954c46dbc550ce3da44fbfb563c5
   Quick: 6473349e43b9271a8d43839d9ba1c442ed1b7ac4
   SwiftLint: 99f82d07b837b942dd563c668de129a03fc3fb52
 
-PODFILE CHECKSUM: 97911943f641169f1d2b03e9f1f53b2a267380e5
+PODFILE CHECKSUM: 6ac01fddc594b72763f04dd4e6f65b14ba50aa83
 
 COCOAPODS: 1.10.1

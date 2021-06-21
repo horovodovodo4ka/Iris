@@ -25,15 +25,9 @@ public class AstarothPrinter: Printer {
         switch phase {
             case .request:
                 requestString = string.prefix(stringLimit)
-                Log.d(Network, string, callSite.astaroth)
+                Log.d(Network, self.requestString, callSite.astaroth)
             case .response(_):
                 responseString = string.prefix(stringLimit)
-//                let string = "\(requestString)\n\(string)"
-//                if success {
-//                    Log.i(Network, string, callSite.astaroth)
-//                } else {
-//                    Log.e(Network, string, callSite.astaroth)
-//                }
             case .decoding(let success):
                 let string = "\(requestString)\n\(responseString)\n\(string)"
                 if success {

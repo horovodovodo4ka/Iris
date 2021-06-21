@@ -20,78 +20,65 @@ class ViewController: UIViewController {
             configuration: .default,
             executor: AlamofireExecutor())
 
-//        transport.add(middlware: .test)
+        transport.add(middlware: .test)
 
         transport.executeWithMeta(TestOperation())
             .done { v in
+                print(v.headers[.contentType] ?? "")
                 print(v.model)
-                print(v.headers)
             }
             .catch { e in
                 print(e.localizedDescription)
             }
 
-//        _ = TestResource(transport: transport)
-//            .create(entity: TestOperation.Request())
-//            .tap {
-//                print($0)
-//            }
+        //        _ = TestResource(transport: transport)
+        //            .create(entity: TestOperation.Request())
+        //            .tap {
+        //                print($0)
+        //            }
 
-        let e = BadStateError(cause: Exception(message: "Boo!\""))
-
-        blah()
-
-        let r = (try? QueryString().encode(TestOperation.Request())) ?? ""
-        print(r)
-        print(e)
-    }
-
-    private func blah() {
-        let st1: StackTraceElement = .context()
-        let st2: StackTraceElement = .here()
-        let st3: StackTraceElement = .source()
-        let st4 = some
-        let st5 = stat()
-        let st6 = { StackTraceElement.here() }()
-    }
-
-    var some: StackTraceElement {
-        .here()
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
 
 }
 
-func stat() -> StackTraceElement {
-    .here()
-}
 // transport
 
 extension TransportConfig {
     static let `default` = TransportConfig(
-        printer: AstarothPrinter(stringLimit: 200),
+        printer: AstarothPrinter(),
         encoder: Json.encoder,
         decoder: Json.decoder
     )
 }
 
-extension Recover {
-    static func retryAfter(seconds: TimeInterval) -> Recover {
-        Recover { _, _ in
-            after(seconds: seconds) .then { _ -> Promise<Void> in .value(()) }
+// middleware
+extension Middleware {
+    static let test = Middleware(
+        headers:
+            <<<{ _ in Headers([.authorization: Authorization.basic(login: "John", password: "Doe")]) },
+            .auth(yes: true),
+        validate: .statusCode,
+        recover: .retryAfter(seconds: 3)
+    )
+}
+
+//
+
+extension Middleware.Recover {
+    static func retryAfter(seconds: TimeInterval) -> Self {
+        Self { _, _ in
+            after(seconds: seconds).then { _ -> Promise<Void> in .value(()) }
         }
     }
 }
 
-extension Middleware {
-    static let test = Middleware(
-        validate: .statusCode,
-        recover: .retryAfter(seconds: 3)
-    )
+extension Middleware.RequestHeaders {
+    static func auth(yes: @escaping @autoclosure () -> Bool) -> Self {
+        Self { _ in
+            guard yes() else { return .empty }
+            return Headers([.authorization: Authorization.bearer(token: "ABCDEF01234567890")])
+        }
+    }
 }
 
 // resource
@@ -107,9 +94,28 @@ struct TestResource: Creatable {
 
 // operation
 
-struct TestOperation: ReadOperation, WriteOperation, PostOperation {
+protocol ApiOperation: Iris.Operation {}
 
-//    let method = Get()
+extension ApiOperation {
+    var url: String { "https://reqbin.com/echo/post/json" }
+    //    var url: String { "https://google.ru" }
+    //    var url: String { "https://exampleqqq.com" }
+}
+
+struct TestOperation: ApiOperation, ReadOperation, WriteOperation {
+
+    let headers = Headers.empty
+
+    // MARK: Read
+    typealias ResponseType = String
+    //    typealias ResponseType = Response
+
+    struct Response: Decodable {
+        var success: String
+    }
+
+    // MARK: Write
+    typealias RequestType = Request
 
     struct Request: Encodable {
         var id = 78912
@@ -127,29 +133,26 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
         }
     }
 
-    struct Response: Decodable {
-        var success: String
-//        var foo: Bool
-    }
-
-    typealias RequestType = Request
-    typealias ResponseType = Response
-
-    var headers: [String: String] { [:] }
-
-    var url: String { "https://reqbin.com/echo/post/json" }
-//    var url: String { "https://google.ru" }
-//    var url: String { "https://exampleqqq.com" }
-
-    var request: Request {
-        Request()
-    }
+    var request: Request { Request() }
 }
 
-// extension TestOperation: IndirectModelOperation {
-//    var responseRelativePath: String { ".success" }
-// }
+extension TestOperation: PostOperation {}
 
-typealias Exception = Iris.Exception
+extension TestOperation: IndirectModelOperation {
+    var responseRelativePath: String { ".success" }
+}
 
-class BadStateError: Exception {}
+enum Authorization: CustomStringConvertible {
+    case basic(login: String, password: String)
+    case bearer(token: String)
+
+    var description: String {
+        switch self {
+            case let .basic(login, password):
+                guard let token = "\(login):\(password)".data(using: .utf8)?.base64EncodedString() else { return "" }
+                return "Basic \(token)"
+            case let .bearer(token):
+                return "Bearer \(token)"
+        }
+    }
+}

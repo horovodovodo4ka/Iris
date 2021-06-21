@@ -26,13 +26,13 @@ extension JSONDecoder: ResponseTraversalDecoder {
 //
 
 public extension Json {
-    public static var encoder: RequestEncoder {
+    static var encoder: RequestEncoder {
         let e = JSONEncoder()
         e.keyEncodingStrategy = .convertToSnakeCase
         return e
     }
 
-    public static var decoder: ResponseDecoder {
+    static var decoder: ResponseDecoder {
         let d = JSONDecoder()
         d.keyDecodingStrategy = .convertFromSnakeCase
         return d

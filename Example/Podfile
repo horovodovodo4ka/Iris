@@ -11,10 +11,10 @@ target 'Iris_Example' do
   pod 'SwiftLint'
 
   target 'Iris_Tests' do
-    inherit! :search_paths
+    inherit! :complete
 
     pod 'Quick'
-    pod 'Nimble'
+    pod 'Nimble', :git => "https://github.com/Quick/Nimble", :branch => "main"
   end
 end
 

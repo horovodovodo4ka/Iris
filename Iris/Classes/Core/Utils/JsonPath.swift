@@ -55,10 +55,6 @@ fileprivate extension String {
 
 public class JsonPath<T: Decodable>: Decodable {
 
-    enum Error: Swift.Error {
-        case emptyPath
-    }
-
     private let decoder: Decoder
 
     public required init(from decoder: Decoder) throws {
