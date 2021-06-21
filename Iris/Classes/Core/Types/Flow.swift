@@ -19,7 +19,7 @@ private protocol AnyFlow: AnyObject {
 }
 
 // TODO replace this shit with async await when released
-// @available(*)
+@available(*, deprecated)
 public class Flow<ResponseType>: AnyFlow, Thenable {
     public typealias T = ResponseType
 
