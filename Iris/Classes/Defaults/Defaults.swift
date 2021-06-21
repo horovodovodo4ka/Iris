@@ -63,3 +63,13 @@ public extension Validator {
         }
     }
 }
+
+// MARK: - NOOP printer
+
+public class NoopPrinter: Printer {
+    public init() {}
+
+    public func print(_ string: String, phase: Phase, callSite: StackTraceElement) {
+        // Do nothing
+    }
+}

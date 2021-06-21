@@ -132,11 +132,13 @@ public extension Flow {
         return Flow<ResponseType>(host: newHost, transport: transport, context: conext, parent: self)
     }
 
+    @discardableResult
     func done(_ body: @escaping (ResponseType) throws -> Void) -> Flow<Void> {
         let newHost = host.done(body)
         return Flow<Void>(host: newHost, transport: transport, context: conext, parent: self)
     }
 
+    @discardableResult
     func `catch`(_ body: @escaping (Swift.Error) -> Void) -> Flow<Void> {
         let newHost = Promise<Void>.pending()
 
@@ -159,6 +161,11 @@ public extension Flow {
 
     func tap(_ body: @escaping (Result<ResponseType>) -> Void) -> Flow<ResponseType> {
         let newHost = host.tap(body)
+        return Flow<ResponseType>(host: newHost, transport: transport, context: conext, parent: self)
+    }
+
+    func ensure(_ body: @escaping () -> Void) -> Flow<ResponseType> {
+        let newHost = host.ensure(body)
         return Flow<ResponseType>(host: newHost, transport: transport, context: conext, parent: self)
     }
 }

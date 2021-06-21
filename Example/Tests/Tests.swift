@@ -1,45 +1,68 @@
 // https://github.com/Quick/Quick
 
+import XCTest
 import Quick
 import Nimble
 import Iris
 
-class TableOfContentsSpec: QuickSpec {
+struct TestOperation: ReadOperation, WriteOperation, PostOperation, IndirectModelOperation {
+
+    struct Request: Encodable {
+        var id = 78912
+        var customer = "Jason Sweet[ ? # ]"
+        var quantity = 1
+        var price = 18.00
+        var testABC = ABC()
+        var nexting = [[1], [2, 3], [4, 5, 6]]
+        var testArr = [1, 2, 3]
+        var testDict = ["a": 1, "b": 2, "c[]": 3]
+
+        struct ABC: Encodable {
+            var b = 1
+            var c = "a[]"
+        }
+    }
+//
+//    struct Response: Decodable {
+//        var success: String
+//    }
+
+    typealias RequestType = Request
+    typealias ResponseType = String
+
+    var headers: [String: String] { [:] }
+
+        var url: String { "https://reqbin.com/echo/post/json" }
+//    var url: String { "https://google.ru" }
+    //    var url: String { "https://exampleqqq.com" }
+
+    var request: Request {
+        Request()
+    }
+
+    // MARK: - IndirectModelOperation
+    var responseRelativePath: String { ".success" }
+}
+
+class BasicInteractions: QuickSpec {
     override func spec() {
-        describe("these will fail") {
+        let transport = Transport(
+            configuration: TransportConfig(printer: NoopPrinter(), encoder: Json.encoder, decoder: Json.decoder),
+            executor: AlamofireExecutor()
+        )
 
-            it("can do maths") {
-                expect(1) == 2
-            }
+        describe("Basic interactions") {
+            it("Send and resieves JSON, response decoded with json path") {
+                let flow = transport.execute(TestOperation())
 
-            it("can read") {
-                expect("number") == "string"
-            }
+                waitUntil(timeout: .seconds(6)) { done in
 
-            it("will eventually fail") {
-                expect("time").toEventually( equal("done") )
-            }
-            
-            context("these will pass") {
+                    DispatchQueue.global().async {
+                        Thread.sleep(forTimeInterval: 5)
 
-                it("can do maths") {
-                    expect(23) == 23
-                }
-
-                it("can read") {
-                    expect("🐮") == "🐮"
-                }
-
-                it("will eventually pass") {
-                    var time = "passing"
-
-                    DispatchQueue.main.async {
-                        time = "done"
-                    }
-
-                    waitUntil { done in
-                        Thread.sleep(forTimeInterval: 0.5)
-                        expect(time) == "done"
+                        expect(flow.result.map { $0^ }).to(beSuccess { value in
+                            expect(value).to(equal("true"))
+                        })
 
                         done()
                     }
@@ -48,3 +71,18 @@ class TableOfContentsSpec: QuickSpec {
         }
     }
 }
+
+postfix operator ^
+
+import PromiseKit
+public extension PromiseKit.Result {
+    static postfix func ^ (lhs: Self) -> Swift.Result<T, Error> {
+        switch lhs {
+            case .fulfilled(let value):
+                return .success(value)
+            case .rejected(let error):
+                return .failure(error)
+        }
+    }
+}
+

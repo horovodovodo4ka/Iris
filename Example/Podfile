@@ -14,7 +14,7 @@ target 'Iris_Example' do
     inherit! :search_paths
 
     pod 'Quick'
-    pod 'Nimble'
+    pod 'Nimble', :git => "https://github.com/Quick/Nimble", :branch => "main"
   end
 end
 

@@ -222,7 +222,7 @@ public enum TransportError: Swift.Error, LocalizedError {
     public var errorDescription: String? {
         switch self {
             case .indirectRequiresTraverser(let operation, let decoder):
-                return "\(operation) requires ResponseTraversalDecoder for parsing. \(decoder) is used."
+                return "<\(operation)> requires ResponseTraversalDecoder for parsing. <\(decoder)> is used."
             default:
                 return "\(self)"
         }

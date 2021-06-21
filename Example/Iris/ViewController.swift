@@ -15,7 +15,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-
+        
         let transport = Transport(
             configuration: .default,
             executor: AlamofireExecutor())
@@ -37,31 +37,6 @@ class ViewController: UIViewController {
 //                print($0)
 //            }
 
-        let e = BadStateError(cause: Exception(message: "Boo!\""))
-
-        blah()
-
-        let r = (try? QueryString().encode(TestOperation.Request())) ?? ""
-        print(r)
-        print(e)
-    }
-
-    private func blah() {
-        let st1: StackTraceElement = .context()
-        let st2: StackTraceElement = .here()
-        let st3: StackTraceElement = .source()
-        let st4 = some
-        let st5 = stat()
-        let st6 = { StackTraceElement.here() }()
-    }
-
-    var some: StackTraceElement {
-        .here()
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
     }
 
 }
@@ -73,7 +48,7 @@ func stat() -> StackTraceElement {
 
 extension TransportConfig {
     static let `default` = TransportConfig(
-        printer: AstarothPrinter(stringLimit: 200),
+        printer: AstarothPrinter(),
         encoder: Json.encoder,
         decoder: Json.decoder
     )
@@ -107,9 +82,9 @@ struct TestResource: Creatable {
 
 // operation
 
-struct TestOperation: ReadOperation, WriteOperation, PostOperation {
+struct TestOperation: ReadOperation, WriteOperation {
 
-//    let method = Get()
+    //    let method = Get()
 
     struct Request: Encodable {
         var id = 78912
@@ -129,7 +104,6 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
 
     struct Response: Decodable {
         var success: String
-//        var foo: Bool
     }
 
     typealias RequestType = Request
@@ -137,18 +111,20 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation {
 
     var headers: [String: String] { [:] }
 
-    var url: String { "https://reqbin.com/echo/post/json" }
-//    var url: String { "https://google.ru" }
-//    var url: String { "https://exampleqqq.com" }
+    //    var url: String { "https://reqbin.com/echo/post/json" }
+    var url: String { "https://google.ru" }
+    //    var url: String { "https://exampleqqq.com" }
 
     var request: Request {
         Request()
     }
 }
 
-// extension TestOperation: IndirectModelOperation {
-//    var responseRelativePath: String { ".success" }
-// }
+extension TestOperation: PostOperation {}
+
+extension TestOperation: IndirectModelOperation {
+    var responseRelativePath: String { ".success" }
+}
 
 typealias Exception = Iris.Exception
 
