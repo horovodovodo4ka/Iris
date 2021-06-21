@@ -24,7 +24,6 @@ public final class Transport {
         middlewares.append(middlware)
     }
 
-
     // MARK: - designated execution, only models
     
     @discardableResult
@@ -66,7 +65,6 @@ public final class Transport {
                 response: { _ in () },
                 callSite: callSite)
     }
-
 
     @discardableResult
     public func executeWithMeta<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> Flow<MetaResponse<ResponseType>>
@@ -110,11 +108,12 @@ public final class Transport {
         let logger = configuration.printer()
 
         let headers = middlewares
-            .compactMap { $0.headers }
+            .flatMap { $0.headers }
+            .map { $0(operation: operation).values }
             .reduce([:]) { result, headers in
-                result.merging(headers(operation: operation)) { _, new in new }
+                result.merging(headers) { _, new in new }
             }
-            .merging(operation.headers) { _, new in new }
+            .merging(operation.headers.values) { _, new in new }
 
         let context = CallContext(url: operation.url,
                                   method: operation.method,
@@ -131,21 +130,23 @@ public final class Transport {
                         seal.reject(error)
                 }
             }
-        }
-        .map { result in
-                let rawResult = RawOperationResult(response: result.response, data: result.data)
+        }.map { result in
+            let headers = Headers(raw: result.response.allHeaderFields)
+            let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
 
-                for validator in self.middlewares.compactMap { $0.validate } {
-                    try validator(operation: operation, result: rawResult)
-                }
+            for validator in self.middlewares.flatMap({ $0.validate }) {
+                try validator(operation: operation, result: rawResult)
+            }
 
-                let ret = try response(result.data)
+            let ret = try response(result.data)
 
-                logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
+            logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
 
-            return MetaResponse(model: ret, headers: rawResult.response.allHeaderFields)
-        }
-        .recover { e -> Promise<MetaResponse<ResponseType>> in
+            return MetaResponse(
+                model: ret,
+                headers: headers
+            )
+        }.recover { e -> Promise<MetaResponse<ResponseType>> in
 
             let error = Exception(cause: e, context: callSite)
 
@@ -175,7 +176,7 @@ public final class Transport {
             return Flow(transport: self, promise: Promise(error: error))
         }
 
-        func safePromise(_ block: Recover) -> Promise<Void> {
+        func safePromise(_ block: Middleware.Recover) -> Promise<Void> {
             do {
                 return try block(operation: operation, error: cause)
             } catch {
@@ -183,7 +184,7 @@ public final class Transport {
             }
         }
 
-        let lazyPromises = middlewares.compactMap { $0.recover }.lazy.map(safePromise(_:))
+        let lazyPromises = middlewares.flatMap { $0.recover }.lazy.map(safePromise(_:))
 
         var it = lazyPromises.makeIterator()
 
@@ -223,8 +224,8 @@ public enum TransportError: Swift.Error, LocalizedError {
         switch self {
             case .indirectRequiresTraverser(let operation, let decoder):
                 return "<\(operation)> requires ResponseTraversalDecoder for parsing. <\(decoder)> is used."
-            default:
-                return "\(self)"
+//            @unknown default:
+//                return "\(self)"
         }
     }
 }
@@ -261,5 +262,5 @@ public struct TransportConfig {
 
 public struct MetaResponse<Response> {
     public let model: Response
-    public let headers: [AnyHashable: Any]
+    public let headers: Headers
 }
