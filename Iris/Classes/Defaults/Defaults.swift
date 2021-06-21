@@ -46,19 +46,19 @@ public enum HTTPError: Swift.Error, LocalizedError {
 }
 
 public extension Middleware.Validator {
-    public static let statusCode = Self {
-            let statusCode = $1.response.statusCode
-
-            switch statusCode {
-                case 100..<300:
-                    return
-                case 400..<500:
-                    throw HTTPError.clientError(code: statusCode)
-                case 500..<600:
-                    throw HTTPError.serverError(code: statusCode)
-                default:
-                    throw HTTPError.unknownResponseCode(code: statusCode)
-            }
+    static let statusCode = Self {
+        let statusCode = $1.response.statusCode
+        
+        switch statusCode {
+            case 100..<300:
+                return
+            case 400..<500:
+                throw HTTPError.clientError(code: statusCode)
+            case 500..<600:
+                throw HTTPError.serverError(code: statusCode)
+            default:
+                throw HTTPError.unknownResponseCode(code: statusCode)
+        }
     }
 }
 
