@@ -15,7 +15,7 @@ public protocol Operation {
 public protocol HTTPOperation: Operation {
     associatedtype MethodType: OperationMethod
 
-    var headers: [String: String] { get }
+    var headers: Headers { get }
     
     var method: MethodType { get }
 }

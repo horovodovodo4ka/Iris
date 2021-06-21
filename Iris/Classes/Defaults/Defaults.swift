@@ -45,9 +45,8 @@ public enum HTTPError: Swift.Error, LocalizedError {
     public var errorDescription: String? { "\(self)" }
 }
 
-public extension Validator {
-    public static var statusCode: Validator {
-        Validator {
+public extension Middleware.Validator {
+    public static let statusCode = Self {
             let statusCode = $1.response.statusCode
 
             switch statusCode {
@@ -60,7 +59,6 @@ public extension Validator {
                 default:
                     throw HTTPError.unknownResponseCode(code: statusCode)
             }
-        }
     }
 }
 
@@ -72,4 +70,16 @@ public class NoopPrinter: Printer {
     public func print(_ string: String, phase: Phase, callSite: StackTraceElement) {
         // Do nothing
     }
+}
+
+// MARK: - HTTP headers
+
+public extension HeaderKey {
+    public static func custom(_ name: String) -> Self { Self(name: name) }
+    
+    public static let authorization = Self(name: "Authorization")
+    public static let contentType = Self(name: "Content-Type")
+    public static let retryAfter = Self(name: "Retry-After")
+    public static let contentEncoding = Self(name: "Content-Encoding")
+    public static let contentLength = Self(name: "Content-Length")
 }

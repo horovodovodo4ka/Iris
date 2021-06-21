@@ -6,6 +6,13 @@ import Nimble
 import Iris
 
 struct TestOperation: ReadOperation, WriteOperation, PostOperation, IndirectModelOperation {
+    // MARK: Operation
+    let headers: Headers = .empty
+
+    let url: String
+
+    // MARK: WriteOperation
+//    typealias RequestType = Request
 
     struct Request: Encodable {
         var id = 78912
@@ -22,23 +29,17 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation, IndirectMode
             var c = "a[]"
         }
     }
-//
-//    struct Response: Decodable {
-//        var success: String
-//    }
-
-    typealias RequestType = Request
-    typealias ResponseType = String
-
-    var headers: [String: String] { [:] }
-
-        var url: String { "https://reqbin.com/echo/post/json" }
-//    var url: String { "https://google.ru" }
-    //    var url: String { "https://exampleqqq.com" }
 
     var request: Request {
         Request()
     }
+
+    // MARK: ReadOperation
+    typealias ResponseType = String
+//
+//    struct Response: Decodable {
+//        var success: String
+//    }
 
     // MARK: - IndirectModelOperation
     var responseRelativePath: String { ".success" }
@@ -53,14 +54,14 @@ class BasicInteractions: QuickSpec {
 
         describe("Basic interactions") {
             it("Send and resieves JSON, response decoded with json path") {
-                let flow = transport.execute(TestOperation())
 
                 waitUntil(timeout: .seconds(6)) { done in
+                    let flow = transport.execute(TestOperation(url: "https://reqbin.com/echo/post/json"))
 
                     DispatchQueue.global().async {
                         Thread.sleep(forTimeInterval: 5)
 
-                        expect(flow.result.map { $0^ }).to(beSuccess { value in
+                        expect(flow.result.map { ^$0 }).to(beSuccess { value in
                             expect(value).to(equal("true"))
                         })
 
@@ -72,11 +73,12 @@ class BasicInteractions: QuickSpec {
     }
 }
 
-postfix operator ^
+// MARK: -
+prefix operator ^
 
 import PromiseKit
-public extension PromiseKit.Result {
-    static postfix func ^ (lhs: Self) -> Swift.Result<T, Error> {
+extension PromiseKit.Result {
+    static prefix func ^ (lhs: Self) -> Swift.Result<T, Error> {
         switch lhs {
             case .fulfilled(let value):
                 return .success(value)
@@ -85,4 +87,3 @@ public extension PromiseKit.Result {
         }
     }
 }
-
