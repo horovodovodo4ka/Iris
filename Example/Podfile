@@ -1,15 +1,16 @@
-source 'https://github.com/CocoaPods/Specs'
+#source 'https://github.com/CocoaPods/Specs'
+
 use_frameworks!
 inhibit_all_warnings!
 
-platform :ios, '9.0'
+platform :ios, '10.0'
 
 target 'Iris_Example' do
   pod 'Iris-iOS', :path => '../'
   pod 'Iris-iOS/Defaults', :path => '../'
 
   pod 'SwiftLint'
-
+  
   target 'Iris_Tests' do
     inherit! :complete
 
@@ -21,7 +22,7 @@ end
 post_install do |installer|
     installer.pods_project.targets.each do |target|
         target.build_configurations.each do |config|
-            config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '9.0'
+            config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '10.0'
         end
     end
 end
