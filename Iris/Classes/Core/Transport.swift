@@ -121,41 +121,48 @@ public final class Transport {
                                   printer: logger,
                                   callSite: callSite)
 
-        let flow = Flow<OperationResult>(transport: self) { seal in
-            try executor.execute(context: context, data: requestData) { result in
-                switch result {
-                    case .success(let data):
-                        seal.fulfill(data)
-                    case .failure(let error):
-                        seal.reject(error)
+        var cancellationCallback: OperationCancellation = {}
+
+        let root = Flow<Void>(transport: self, promise: .value(()))
+
+        let flow = pipeBarriers(operation: operation, to: root)
+            .then {
+                Promise<OperationResult> { seal in
+                cancellationCallback = try self.executor.execute(context: context, data: requestData) { result in
+                        switch result {
+                            case .success(let data):
+                                seal.fulfill(data)
+                            case .failure(let error):
+                                seal.reject(error)
+                        }
+                    }
                 }
+            }.map { result in
+                let headers = Headers(raw: result.response.allHeaderFields)
+                let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
+
+                for validator in self.middlewares.flatMap({ $0.validate }) {
+                    try validator(operation: operation, result: rawResult)
+                }
+
+                let ret = try response(result.data)
+
+                logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
+
+                return MetaResponse(
+                    model: ret,
+                    headers: headers
+                )
+            }.recover { e -> Promise<MetaResponse<ResponseType>> in
+
+                let error = Exception(cause: e, context: callSite)
+
+                logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
+
+                throw error
             }
-        }.map { result in
-            let headers = Headers(raw: result.response.allHeaderFields)
-            let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
 
-            for validator in self.middlewares.flatMap({ $0.validate }) {
-                try validator(operation: operation, result: rawResult)
-            }
-
-            let ret = try response(result.data)
-
-            logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
-
-            return MetaResponse(
-                model: ret,
-                headers: headers
-            )
-        }.recover { e -> Promise<MetaResponse<ResponseType>> in
-
-            let error = Exception(cause: e, context: callSite)
-
-            logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
-
-            throw error
-        }
-
-        return flow
+        let ret = flow
             .recover { e -> Flow<MetaResponse<ResponseType>> in
                 let error = e as! Exception
 
@@ -165,6 +172,10 @@ public final class Transport {
                         self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
                     }
             }
+
+        ret.cancellationCallback = cancellationCallback
+
+        return ret
     }
 
     // middlewares recover section chaining
@@ -212,6 +223,48 @@ public final class Transport {
         return next().recover { e -> Promise<Void> in
             throw Exception(cause: e, context: error.context)
         }
+    }
+
+    private func pipeBarriers<T>(operation: Operation, to: Flow<T>) -> Flow<Void> {
+
+        guard middlewares.count > 0 else {
+            return Flow(transport: self, promise: .value(()))
+        }
+
+        func safePromise(_ block: Middleware.Barrier) -> Promise<Void> {
+            do {
+                return try block(operation: operation)
+            } catch {
+                return Promise(error: error)
+            }
+        }
+
+        let lazyPromises = middlewares.flatMap { $0.barrier }.lazy.map(safePromise(_:))
+
+        var it = lazyPromises.makeIterator()
+
+        var tail: Flow<Void>!
+
+        func chain(_ promise: Promise<Void>) -> Flow<Void> {
+            if let f = tail {
+                tail = f.then { _ in promise }
+            } else {
+                tail = to.map { _ in }.then { _ in promise }
+            }
+            return tail
+        }
+
+        func next() -> Flow<Void> {
+            // If there is any next recover block, try it
+            guard let nextBarrierBlock = it.next() else {
+                return chain(.value(()))
+            }
+
+            // If recover block raises error, try next recover block
+            return chain(nextBarrierBlock).then { _ in next() }
+        }
+
+        return next()
     }
 }
 

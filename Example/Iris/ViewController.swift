@@ -22,7 +22,7 @@ class ViewController: UIViewController {
 
         transport.add(middlware: .test)
 
-        transport.executeWithMeta(TestOperation())
+        let f = transport.executeWithMeta(TestOperation())
             .done { v in
                 print(v.headers[.contentType] ?? "")
                 print(v.model)
@@ -31,11 +31,15 @@ class ViewController: UIViewController {
                 print(e.localizedDescription)
             }
 
-        //        _ = TestResource(transport: transport)
-        //            .create(entity: TestOperation.Request())
-        //            .tap {
-        //                print($0)
-        //            }
+//        after(seconds: 3).done {
+//            f.cancel()
+//        }
+
+//        _ = TestResource(transport: transport)
+//            .create(entity: TestOperation.Request())
+//            .tap {
+//                print($0)
+//            }
 
     }
 
@@ -54,6 +58,7 @@ extension TransportConfig {
 // middleware
 extension Middleware {
     static let test = Middleware(
+        barrier: <<<{ _ in after(seconds: 5).map { () } },
         headers:
             <<<{ _ in Headers([.authorization: Authorization.basic(login: "John", password: "Doe")]) },
             .auth(yes: true),

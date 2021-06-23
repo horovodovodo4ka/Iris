@@ -9,12 +9,14 @@ import Foundation
 import PromiseKit
 
 public struct Middleware {
-    public init(headers: RequestHeaders..., validate: Validator..., recover: Recover...) {
+    public init(barrier: Barrier..., headers: RequestHeaders..., validate: Validator..., recover: Recover...) {
+        self.barrier = barrier
         self.headers = headers
         self.validate = validate
         self.recover = recover
     }
 
+    let barrier: [Barrier]
     let headers: [RequestHeaders]
     let validate: [Validator]
     let recover: [Recover]
@@ -22,12 +24,25 @@ public struct Middleware {
 
 // MARK: -
 
+public typealias OperationBarrier = (Operation) -> Promise<Void>
+public typealias OparationHeaders = (Operation) -> Iris.Headers
 public typealias RawOperationResult = (response: HTTPURLResponse, headers: Headers, data: Data)
 public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
-public typealias OparationHeaders = (Operation) -> Iris.Headers
 public typealias OperationRecover = (Operation, Error) throws -> Promise<Void>
 
 public extension Middleware {
+
+    struct Barrier {
+        private let barrier: OperationBarrier
+        public init(_ barrier: @escaping OperationBarrier) {
+            self.barrier = barrier
+        }
+
+        public func callAsFunction(operation: Operation) -> Promise<Void> {
+            barrier(operation)
+        }
+    }
+
     struct RequestHeaders {
         private let headers: OparationHeaders
         public init(_ headers: @escaping OparationHeaders) {
@@ -60,6 +75,10 @@ public extension Middleware {
             try recover(operation, error)
         }
     }
+}
+
+public prefix func <<< (what: @escaping OperationBarrier) -> Middleware.Barrier {
+    Middleware.Barrier(what)
 }
 
 public prefix func <<< (what: @escaping OparationHeaders) -> Middleware.RequestHeaders {

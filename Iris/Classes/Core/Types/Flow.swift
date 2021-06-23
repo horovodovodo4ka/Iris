@@ -63,12 +63,12 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
     let transport: Transport
     private let host: Promise<ResponseType>
     private let conext: Pending<Void>
-    private let cancellationCallback: () -> Void
+    internal var cancellationCallback: () -> Void
 
     fileprivate var parent: AnyFlow?
     fileprivate var children: [AnyFlow] = []
 
-    func cancel() {
+    public func cancel() {
         cancelChain()
     }
 
@@ -76,7 +76,7 @@ public class Flow<ResponseType>: AnyFlow, Thenable {
         cancelChain()
     }
 
-    func cancelChain() {
+    private func cancelChain() {
         if conext.promise.isPending {
             conext.resolver.reject(PMKError.cancelled)
         }
@@ -103,7 +103,7 @@ public extension Flow {
         self.init(host: promise, transport: transport)
     }
 
-    convenience init(transport: Transport, _ factory: (Resolver<ResponseType>) throws -> (OperationCancellation)) {
+    convenience init(transport: Transport, _ factory: (Resolver<ResponseType>) throws -> OperationCancellation) {
         var callback: OperationCancellation = {}
         let promise = Promise<ResponseType> { seal in
             callback = try factory(seal)
@@ -146,7 +146,9 @@ public extension Flow {
             switch $0 {
                 case .fulfilled(_): break
                 case .rejected(let error):
-                    body(error)
+                    if !error.isCancelled {
+                        body(error)
+                    }
             }
             newHost.resolver.fulfill(())
         }
