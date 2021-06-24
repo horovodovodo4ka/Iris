@@ -9,27 +9,31 @@
 import UIKit
 import Iris
 import PromiseKit
+import Combine
 
 class ViewController: UIViewController {
+    private var store = [AnyCancellable]()
+    let transport = Transport(
+        configuration: .default,
+        executor: AlamofireExecutor())
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
 
-        let transport = Transport(
-            configuration: .default,
-            executor: AlamofireExecutor())
 
         transport.add(middlware: .test)
 
-        let f = transport.executeWithMeta(TestOperation())
-            .done { v in
-                print(v.headers[.contentType] ?? "")
-                print(v.model)
-            }
-            .catch { e in
-                print(e.localizedDescription)
-            }
+        // cancel
+//        store = []
+
+//            .done { v in
+//                print(v.headers[.contentType] ?? "")
+//                print(v.model)
+//            }
+//            .catch { e in
+//                print(e.localizedDescription)
+//            }
 
 //        after(seconds: 3).done {
 //            f.cancel()
@@ -43,6 +47,27 @@ class ViewController: UIViewController {
 
     }
 
+    @IBAction func start() {
+
+        transport.executeWithMeta(TestOperation())
+            .sink {
+                switch $0 {
+                    case .finished:
+                        break
+                    case .failure(let e):
+                        print(e.localizedDescription)
+                }
+            } receiveValue: { v in
+                print(v.headers[.contentType] ?? "")
+                print(v.model)
+            }
+            .store(in: &store)
+
+    }
+
+    @IBAction func cancel() {
+        store = []
+    }
 }
 
 // transport
@@ -58,21 +83,22 @@ extension TransportConfig {
 // middleware
 extension Middleware {
     static let test = Middleware(
-        barrier: <<<{ _ in after(seconds: 5).map { () } },
+        barrier: <<<{ _ in Delay(.seconds(5)).eraseToAnyPublisher() },
         headers:
             <<<{ _ in Headers([.authorization: Authorization.basic(login: "John", password: "Doe")]) },
             .auth(yes: true),
         validate: .statusCode,
-        recover: .retryAfter(seconds: 3)
+        recover: .retryAfter(interval: .seconds(3))
     )
 }
 
 //
 
 extension Middleware.Recover {
-    static func retryAfter(seconds: TimeInterval) -> Self {
+    static func retryAfter(interval: DispatchTimeInterval) -> Self {
         Self { _, _ in
-            after(seconds: seconds).then { _ -> Promise<Void> in .value(()) }
+            Delay(interval).setFailureType(to: Error.self).eraseToAnyPublisher()
+//            after(seconds: seconds).then { _ -> Promise<Void> in .value(()) }
         }
     }
 }
@@ -102,8 +128,8 @@ struct TestResource: Creatable {
 protocol ApiOperation: Iris.Operation {}
 
 extension ApiOperation {
-    var url: String { "https://reqbin.com/echo/post/json" }
-    //    var url: String { "https://google.ru" }
+//    var url: String { "https://reqbin.com/echo/post/json" }
+        var url: String { "https://google.ru" }
     //    var url: String { "https://exampleqqq.com" }
 }
 
@@ -159,5 +185,24 @@ enum Authorization: CustomStringConvertible {
             case let .bearer(token):
                 return "Bearer \(token)"
         }
+    }
+}
+
+struct Delay: Publisher {
+    typealias Output = Void
+    typealias Failure = Never
+
+    private let future: Future<Output, Failure>
+
+    init(_ delayInterval: DispatchTimeInterval) {
+        future = Future { complete in
+            DispatchQueue.global().asyncAfter(deadline: .now() + delayInterval) {
+                complete(.success(()))
+            }
+        }
+    }
+
+    func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
+        future.receive(subscriber: subscriber)
     }
 }

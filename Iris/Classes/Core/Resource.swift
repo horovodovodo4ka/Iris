@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 public protocol Resource {
     var transport: Transport { get }
@@ -38,7 +39,7 @@ public protocol Readable: Resource {
 }
 
 public extension Readable {
-    func read(entityWithId id: ResourceId<ModelId> = .this, _ callSite: StackTraceElement = .context()) -> Flow<ModelType> {
+    func read(entityWithId id: ResourceId<ModelId> = .this, _ callSite: StackTraceElement = .context()) -> AnyPublisher<ModelType, Error> {
         transport.execute(readOperation(id), from: callSite)
     }
 }
@@ -55,7 +56,7 @@ public protocol Listable: Resource {
 }
 
 public extension Listable {
-    func list(_ callSite: StackTraceElement = .context()) -> Flow<[ModelType]> {
+    func list(_ callSite: StackTraceElement = .context()) ->AnyPublisher<[ModelType], Error> {
         transport.execute(listOperation(), from: callSite)
     }
 }
@@ -74,7 +75,7 @@ public protocol Creatable: Resource {
 }
 
 public extension Creatable {
-    func create(entity model: NewModelType, _ callSite: StackTraceElement = .context()) -> Flow<ModelType> {
+    func create(entity model: NewModelType, _ callSite: StackTraceElement = .context()) -> AnyPublisher<ModelType, Error> {
         transport.execute(createOperation(model), from: callSite)
     }
 }
@@ -92,7 +93,7 @@ public protocol Updateable: Resource {
 }
 
 public extension Updateable {
-    func update(entity model: ModelType, _ callSite: StackTraceElement = .context()) -> Flow<ModelType> {
+    func update(entity model: ModelType, _ callSite: StackTraceElement = .context()) -> AnyPublisher<ModelType, Error> {
         transport.execute(createOperation(model), from: callSite)
     }
 }
@@ -109,7 +110,7 @@ public protocol Deletable: Resource {
 }
 
 public extension Deletable {
-    func delete(entity model: ModelType, _ callSite: StackTraceElement = .context()) -> Flow<Void> {
+    func delete(entity model: ModelType, _ callSite: StackTraceElement = .context()) -> AnyPublisher<Void, Error> {
         transport.execute(deleteOperation(model), from: callSite)
     }
 }

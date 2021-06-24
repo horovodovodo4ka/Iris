@@ -56,17 +56,17 @@ class BasicInteractions: QuickSpec {
             it("Send and resieves JSON, response decoded with json path") {
 
                 waitUntil(timeout: .seconds(6)) { done in
-                    let flow = transport.execute(TestOperation(url: "https://reqbin.com/echo/post/json"))
-
-                    DispatchQueue.global().async {
-                        Thread.sleep(forTimeInterval: 5)
-
-                        expect(flow.result.map { ^$0 }).to(beSuccess { value in
-                            expect(value).to(equal("true"))
-                        })
-
-                        done()
-                    }
+//                    let flow = transport.execute(TestOperation(url: "https://reqbin.com/echo/post/json"))
+//
+//                    DispatchQueue.global().async {
+//                        Thread.sleep(forTimeInterval: 5)
+//
+//                        expect(flow.result.map { ^$0 }).to(beSuccess { value in
+//                            expect(value).to(equal("true"))
+//                        })
+//
+//                        done()
+//                    }
                 }
             }
         }

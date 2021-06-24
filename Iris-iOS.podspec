@@ -20,7 +20,7 @@ Pod::Spec.new do |s|
   s.source           = { :git => 'https://github.com/horovodovodo4ka/Iris.git', :tag => s.version.to_s }
 
   s.module_name = 'Iris'
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '13.0'
   s.swift_version = '5.4'
 
   s.subspec 'Core' do |sp|

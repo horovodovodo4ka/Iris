@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import PromiseKit
+import Combine
 
 public struct Middleware {
     public init(barrier: Barrier..., headers: RequestHeaders..., validate: Validator..., recover: Recover...) {
@@ -24,11 +24,11 @@ public struct Middleware {
 
 // MARK: -
 
-public typealias OperationBarrier = (Operation) -> Promise<Void>
+public typealias OperationBarrier = (Operation) -> AnyPublisher<Void, Never>
 public typealias OparationHeaders = (Operation) -> Iris.Headers
 public typealias RawOperationResult = (response: HTTPURLResponse, headers: Headers, data: Data)
 public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
-public typealias OperationRecover = (Operation, Error) throws -> Promise<Void>
+public typealias OperationRecover = (Operation, Error) throws -> AnyPublisher<Void, Error>
 
 public extension Middleware {
 
@@ -38,7 +38,7 @@ public extension Middleware {
             self.barrier = barrier
         }
 
-        public func callAsFunction(operation: Operation) -> Promise<Void> {
+        public func callAsFunction(operation: Operation) -> AnyPublisher<Void, Never> {
             barrier(operation)
         }
     }
@@ -71,7 +71,7 @@ public extension Middleware {
             self.recover = recover
         }
 
-        public func callAsFunction(operation: Operation, error: Error) throws -> Promise<Void> {
+        public func callAsFunction(operation: Operation, error: Error) throws -> AnyPublisher<Void, Error> {
             try recover(operation, error)
         }
     }
