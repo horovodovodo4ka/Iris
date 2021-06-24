@@ -19,11 +19,11 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="top" spacing="18" translatesAutoresizingMaskIntoConstraints="NO" id="XL2-98-DuD">
+                            <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" alignment="center" spacing="18" translatesAutoresizingMaskIntoConstraints="NO" id="XL2-98-DuD">
                                 <rect key="frame" x="149.5" y="290" width="76.5" height="87"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="b8f-pe-oeE">
-                                        <rect key="frame" x="0.0" y="0.0" width="61.5" height="34.5"/>
+                                        <rect key="frame" x="7.5" y="0.0" width="61.5" height="34.5"/>
                                         <state key="normal" title="Button"/>
                                         <buttonConfiguration key="configuration" style="plain" title="Start"/>
                                         <connections>
@@ -47,6 +47,10 @@
                             <constraint firstItem="XL2-98-DuD" firstAttribute="centerY" secondItem="kh9-bI-dsS" secondAttribute="centerY" id="xuT-Uk-5kl"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="cancelButton" destination="aX3-ah-yvC" id="NAA-dd-uIN"/>
+                        <outlet property="startButton" destination="b8f-pe-oeE" id="GkD-Hc-HGG"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="x5A-6p-PRh" sceneMemberID="firstResponder"/>
             </objects>

@@ -63,7 +63,11 @@ public struct AlamofireExecutor: Executor {
                 }
             }
 
-        return { request.cancel() }
+        return {
+            if !request.isFinished {
+                request.cancel()
+            }
+        }
     }
 }
 

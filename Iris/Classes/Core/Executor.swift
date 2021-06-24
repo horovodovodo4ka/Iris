@@ -19,9 +19,8 @@ public struct CallContext {
 }
 
 public protocol Executor {
-    func execute(
-        context: CallContext,
-        data requestData: () throws -> Data?,
-        response: @escaping (Swift.Result<OperationResult, Swift.Error>) -> Void
+    func execute(context: CallContext,
+                 data requestData: () throws -> Data?,
+                 response: @escaping (Result<OperationResult, Error>) -> Void
     ) throws -> OperationCancellation
 }

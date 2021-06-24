@@ -8,7 +8,6 @@
 
 import UIKit
 import Iris
-import PromiseKit
 import Combine
 
 class ViewController: UIViewController {
@@ -16,6 +15,9 @@ class ViewController: UIViewController {
     let transport = Transport(
         configuration: .default,
         executor: AlamofireExecutor())
+
+    @IBOutlet weak var startButton: UIButton!
+    @IBOutlet weak var cancelButton: UIButton!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,21 +47,34 @@ class ViewController: UIViewController {
 //                print($0)
 //            }
 
+        cancelButton.isEnabled = false
+
     }
 
     @IBAction func start() {
+        cancelButton.isEnabled = true
+        startButton.isEnabled = false
 
         transport.executeWithMeta(TestOperation())
+            .handleEvents(receiveCancel: {
+                self.cancelButton.isEnabled = false
+                self.startButton.isEnabled = true
+            })
+            .map {
+                Result.success($0)
+            }
+            .catch {
+                Just(.failure($0))
+            }
+            .receive(on: DispatchQueue.main)
             .sink {
                 switch $0 {
-                    case .finished:
-                        break
-                    case .failure(let e):
-                        print(e.localizedDescription)
+                    case .success(let v):
+                        print(v.headers[.contentType] ?? "")
+                        print(v.model)
+                    case .failure(let error):
+                        print(error)
                 }
-            } receiveValue: { v in
-                print(v.headers[.contentType] ?? "")
-                print(v.model)
             }
             .store(in: &store)
 
@@ -83,7 +98,7 @@ extension TransportConfig {
 // middleware
 extension Middleware {
     static let test = Middleware(
-        barrier: <<<{ _ in Delay(.seconds(5)).eraseToAnyPublisher() },
+//        barrier: <<<{ _ in Delay(.seconds(5)).eraseToAnyPublisher() },
         headers:
             <<<{ _ in Headers([.authorization: Authorization.basic(login: "John", password: "Doe")]) },
             .auth(yes: true),

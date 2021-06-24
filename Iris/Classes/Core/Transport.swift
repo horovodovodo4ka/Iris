@@ -122,47 +122,51 @@ public final class Transport {
                                   printer: logger,
                                   callSite: callSite)
 
-        var cancellationCallback: OperationCancellation = {}
+        var onCancel: OperationCancellation = {}
 
         let barrier = barrier(operation: operation).setFailureType(to: Error.self)
 
         let request = barrier.flatMap {
             Future<OperationResult, Error> { complete in
-                cancellationCallback = try self.executor.execute(context: context, data: requestData, response: { result in
-                    complete(result)
+                onCancel = try self.executor.execute(context: context, data: requestData, response: {
+                    complete($0)
                 })
             }
-            .handleEvents(receiveCancel: cancellationCallback)
+            .handleEvents(receiveCancel: onCancel)
         }
 
-        let validate = request.tryMap { result -> MetaResponse<ResponseType> in
-            let headers = Headers(raw: result.response.allHeaderFields)
-            let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
+        let validate = request
+            .tryMap { result -> MetaResponse<ResponseType> in
+                let headers = Headers(raw: result.response.allHeaderFields)
+                let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
 
-            for validator in self.middlewares.flatMap({ $0.validate }) {
-                try validator(operation: operation, result: rawResult)
+                for validator in self.middlewares.flatMap({ $0.validate }) {
+                    try validator(operation: operation, result: rawResult)
+                }
+
+                let ret = try response(result.data)
+
+                logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
+
+                return MetaResponse(
+                    model: ret,
+                    headers: headers
+                )
             }
 
-            let ret = try response(result.data)
-
-            logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
-
-            return MetaResponse(
-                model: ret,
-                headers: headers
-            )
-        }
-
-        let error = validate.tryCatch { e -> AnyPublisher<MetaResponse<ResponseType>, Error> in
+        let error = validate.catch { e -> Fail<MetaResponse<ResponseType>, Exception> in
             let error = Exception(cause: e, context: callSite)
 
             logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
 
-            throw error
+            return Fail(error: error)
         }
 
-        let recover = error.tryCatch { e in
-            self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
+        let recover = error.catch {
+            self.recover(operation: operation, error: $0)
+                .flatMap {
+                    self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
+                }
         }
 
         return recover.eraseToAnyPublisher()
@@ -173,9 +177,7 @@ public final class Transport {
             return Just(()).eraseToAnyPublisher()
         }
 
-        let lazyPromises = middlewares.flatMap { $0.barrier }.lazy
-
-        var it = lazyPromises.makeIterator()
+        var it = middlewares.flatMap { $0.barrier }.lazy.makeIterator()
 
         func next() -> AnyPublisher<Void, Never> {
             guard let nextBarrierBlock = it.next() else {
@@ -195,195 +197,28 @@ public final class Transport {
             return Fail(error: cause).eraseToAnyPublisher()
         }
 
-        let lazyPromises = middlewares.flatMap { $0.recover }.lazy
-
-        var it = lazyPromises.makeIterator()
+        var it = middlewares.flatMap { $0.recover }.lazy.makeIterator()
 
         func next() -> AnyPublisher<Void, Error> {
             guard let nextBarrierBlock = it.next() else {
                 return Fail(error: cause).eraseToAnyPublisher()
             }
 
-            return Future<Void, Error> { complete in
-                try nextBarrierBlock(operation: operation, error: cause)
+            let block: AnyPublisher<Void, Error>
+            do {
+                block = try nextBarrierBlock(operation: operation, error: cause)
+            } catch {
+                block = Fail(error: cause).eraseToAnyPublisher()
             }
-            .flatMap { next() }
-            .eraseToAnyPublisher()
+
+            return block
+                .catch { _ in next() }
+                .eraseToAnyPublisher()
         }
 
         return next()
     }
-
-//    private func execute<ResponseType, O: HTTPOperation>(
-//        operation: O,
-//        data requestData: @escaping EncodingLambda,
-//        response: @escaping DecodingLambda<ResponseType>,
-//        callSite: StackTraceElement) -> Flow<MetaResponse<ResponseType>> {
-//
-//        fatalError()
-//
-        //        let logger = configuration.printer()
-        //
-        //        let headers = middlewares
-        //            .flatMap { $0.headers }
-        //            .map { $0(operation: operation).values }
-        //            .reduce([:]) { result, headers in
-        //                result.merging(headers) { _, new in new }
-        //            }
-        //            .merging(operation.headers.values) { _, new in new }
-        //
-        //        let context = CallContext(url: operation.url,
-        //                                  method: operation.method,
-        //                                  headers: headers,
-        //                                  printer: logger,
-        //                                  callSite: callSite)
-        //
-        //        var cancellationCallback: OperationCancellation = {}
-        //
-        //        let root = Flow<Void>(transport: self, promise: .value(()))
-        //
-        //        let flow = pipeBarriers(operation: operation, to: root)
-        //            .then {
-        //                Promise<OperationResult> { seal in
-        //                cancellationCallback = try self.executor.execute(context: context, data: requestData) { result in
-        //                        switch result {
-        //                            case .success(let data):
-        //                                seal.fulfill(data)
-        //                            case .failure(let error):
-        //                                seal.reject(error)
-        //                        }
-        //                    }
-        //                }
-        //            }.map { result in
-        //                let headers = Headers(raw: result.response.allHeaderFields)
-        //                let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
-        //
-        //                for validator in self.middlewares.flatMap({ $0.validate }) {
-        //                    try validator(operation: operation, result: rawResult)
-        //                }
-        //
-        //                let ret = try response(result.data)
-        //
-        //                logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
-        //
-        //                return MetaResponse(
-        //                    model: ret,
-        //                    headers: headers
-        //                )
-        //            }.recover { e -> Promise<MetaResponse<ResponseType>> in
-        //
-        //                let error = Exception(cause: e, context: callSite)
-        //
-        //                logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
-        //
-        //                throw error
-        //            }
-        //
-        //        let ret = flow
-        //            .recover { e -> Flow<MetaResponse<ResponseType>> in
-        //                let error = e as! Exception
-        //
-        //                return self
-        //                    .pipeRecovers(operation: operation, error: error, to: flow)
-        //                    .then {
-        //                        self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
-        //                    }
-        //            }
-        //
-        //        ret.cancellationCallback = cancellationCallback
-        //
-        //        return ret
-    }
-
-    // middlewares recover section chaining
-
-    //    private func pipeRecovers<T>(operation: Operation, error: Exception, to: Flow<T>) -> Flow<Void> {
-    //        let cause = error.cause ?? error
-    //
-    //        guard middlewares.count > 0 else {
-    //            return Flow(transport: self, promise: Promise(error: error))
-    //        }
-    //
-    //        func safePromise(_ block: Middleware.Recover) -> Promise<Void> {
-    //            do {
-    //                return try block(operation: operation, error: cause)
-    //            } catch {
-    //                return Promise(error: cause)
-    //            }
-    //        }
-    //
-    //        let lazyPromises = middlewares.flatMap { $0.recover }.lazy.map(safePromise(_:))
-    //
-    //        var it = lazyPromises.makeIterator()
-    //
-    //        var tail: Flow<Void>!
-    //
-    //        func chain(_ promise: Promise<Void>) -> Flow<Void> {
-    //            if let f = tail {
-    //                tail = f.recover { _ in promise }
-    //            } else {
-    //                tail = to.map { _ in }.recover { _ in promise }
-    //            }
-    //            return tail
-    //        }
-    //
-    //        func next() -> Flow<Void> {
-    //            // If there is any next recover block, try it
-    //            guard let nextRecoverBlock = it.next() else {
-    //                return chain(Promise<Void>(error: cause))
-    //            }
-    //
-    //            // If recover block raises error, try next recover block
-    //            return chain(nextRecoverBlock).recover { _ in next() }
-    //        }
-    //
-    //        return next().recover { e -> Promise<Void> in
-    //            throw Exception(cause: e, context: error.context)
-    //        }
-    //    }
-    //
-    //    private func pipeBarriers<T>(operation: Operation, to: Flow<T>) -> Flow<Void> {
-    //
-    //        guard middlewares.count > 0 else {
-    //            return Flow(transport: self, promise: .value(()))
-    //        }
-    //
-    //        func safePromise(_ block: Middleware.Barrier) -> Promise<Void> {
-    //            do {
-    //                return try block(operation: operation)
-    //            } catch {
-    //                return Promise(error: error)
-    //            }
-    //        }
-    //
-    //        let lazyPromises = middlewares.flatMap { $0.barrier }.lazy.map(safePromise(_:))
-    //
-    //        var it = lazyPromises.makeIterator()
-    //
-    //        var tail: Flow<Void>!
-    //
-    //        func chain(_ promise: Promise<Void>) -> Flow<Void> {
-    //            if let f = tail {
-    //                tail = f.then { _ in promise }
-    //            } else {
-    //                tail = to.map { _ in }.then { _ in promise }
-    //            }
-    //            return tail
-    //        }
-    //
-    //        func next() -> Flow<Void> {
-    //            // If there is any next recover block, try it
-    //            guard let nextBarrierBlock = it.next() else {
-    //                return chain(.value(()))
-    //            }
-    //
-    //            // If recover block raises error, try next recover block
-    //            return chain(nextBarrierBlock).then { _ in next() }
-    //        }
-    //
-    //        return next()
-    //    }
-//}
+}
 
 // MARK: -
 
@@ -394,8 +229,6 @@ public enum TransportError: Swift.Error, LocalizedError {
         switch self {
             case .indirectRequiresTraverser(let operation, let decoder):
                 return "<\(operation)> requires ResponseTraversalDecoder for parsing. <\(decoder)> is used."
-                //            @unknown default:
-                //                return "\(self)"
         }
     }
 }
