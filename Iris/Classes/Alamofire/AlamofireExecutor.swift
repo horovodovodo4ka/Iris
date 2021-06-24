@@ -12,7 +12,70 @@ import PromiseKit
 private let nullString = "(null)"
 private let separatorString = "*******************************"
 
+private struct ResponseInfo {
+    let httpResponse: HTTPURLResponse?
+    let data: Data?
+    let elapsedTime: TimeInterval
+    let error: Error?
+}
+
 public struct AlamofireExecutor: Executor {
+
+    private let logger: AlamofireLogger
+
+    public init(loggingConfig: AlamofireLogger = AlamofireLogger()) {
+        self.logger = loggingConfig
+    }
+
+
+    public func execute(
+        context: CallContext,
+        data requestData: () throws -> Data?,
+        response: @escaping (Swift.Result<OperationResult, Swift.Error>) -> Void) throws -> OperationCancellation {
+
+        var urlRequest = try URLRequest(url: context.url, method: context.method.alamofire)
+        urlRequest.allHTTPHeaderFields = context.headers
+        urlRequest.httpBody = try requestData()
+
+        let request = AF.request(urlRequest)
+
+        // logging
+        logger.logRequest(request: urlRequest, context: context)
+        //
+
+        request
+            .responseData { ret in
+                // logging
+                let responseInfo = ResponseInfo(
+                    httpResponse: ret.response,
+                    data: ret.data,
+                    elapsedTime: request.metrics?.taskInterval.duration ?? 0.0,
+                    error: ret.error
+                )
+                self.logger.logResponse(request: ret.request, response: responseInfo, context: context)
+                //
+
+                switch ret.result {
+                    case .success(let value):
+                        response(.success((request.response!, value)))
+                    case .failure(let error):
+                        response(.failure(error))
+                }
+            }
+
+        return { request.cancel() }
+    }
+}
+
+private extension OperationMethod {
+    var alamofire: Alamofire.HTTPMethod {
+        return Alamofire.HTTPMethod(rawValue: self.rawValue)
+    }
+}
+
+// MARK: - logging
+
+public struct AlamofireLogger {
     public enum LogLevel {
         case none
         case all
@@ -30,55 +93,15 @@ public struct AlamofireExecutor: Executor {
         }
     }
 
-    private let level: LogLevel
-    private let options: [LogOption]
-
-    public init(level: AlamofireExecutor.LogLevel = .all, options: [AlamofireExecutor.LogOption] = [.jsonPrettyPrint]) {
+    public init(level: LogLevel = .all, options: [LogOption] = [.jsonPrettyPrint]) {
         self.level = level
         self.options = options
     }
 
-    public func execute(
-        context: CallContext,
-        data requestData: () throws -> Data?,
-        response: @escaping (Swift.Result<OperationResult, Swift.Error>) -> Void) throws -> OperationCancellation {
+    let level: LogLevel
+    let options: [LogOption]
 
-        var urlRequest = try URLRequest(url: context.url, method: context.method.alamofire)
-        urlRequest.allHTTPHeaderFields = context.headers
-        urlRequest.httpBody = try requestData()
-
-        let request = AF.request(urlRequest)
-
-        // logging
-        logRequest(request: urlRequest, context: context)
-        //
-
-        request
-            .responseData { ret in
-                // logging
-                let responseInfo = ResponseInfo(
-                    httpResponse: ret.response,
-                    data: ret.data,
-                    elapsedTime: request.metrics?.taskInterval.duration ?? 0.0,
-                    error: ret.error
-                )
-                self.logResponse(request: ret.request, response: responseInfo, context: context)
-                //
-
-                switch ret.result {
-                    case .success(let value):
-                        response(.success((request.response!, value)))
-                    case .failure(let error):
-                        response(.failure(error))
-                }
-            }
-
-        return { request.cancel() }
-    }
-
-    // MARK: - Private helpers + pretty logging
-
-    private func logRequest(request: URLRequest, context: CallContext) {
+    fileprivate func logRequest(request: URLRequest, context: CallContext) {
 
         let method = request.httpMethod!
         let url = request.url?.absoluteString ?? nullString
@@ -110,14 +133,7 @@ public struct AlamofireExecutor: Executor {
         }
     }
 
-    struct ResponseInfo {
-        let httpResponse: HTTPURLResponse?
-        let data: Data?
-        let elapsedTime: TimeInterval
-        let error: Error?
-    }
-
-    private func logResponse(request: URLRequest?, response: ResponseInfo, context: CallContext) {
+    fileprivate func logResponse(request: URLRequest?, response: ResponseInfo, context: CallContext) {
 
         guard level != .none else {
             return
@@ -179,7 +195,6 @@ public struct AlamofireExecutor: Executor {
         }
     }
 
-
     private func string(from data: Data?, prettyPrint: Bool) -> String? {
 
         guard let data = data else {
@@ -216,10 +231,4 @@ public struct AlamofireExecutor: Executor {
         return response
     }
 
-}
-
-private extension OperationMethod {
-    var alamofire: Alamofire.HTTPMethod {
-        return Alamofire.HTTPMethod(rawValue: self.rawValue)
-    }
 }
