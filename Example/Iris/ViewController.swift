@@ -55,23 +55,19 @@ class ViewController: UIViewController {
         cancelButton.isEnabled = true
         startButton.isEnabled = false
 
-        transport.executeWithMeta(TestOperation())
+        transport.execute(TestOperation())
             .handleEvents(receiveCancel: {
                 self.cancelButton.isEnabled = false
                 self.startButton.isEnabled = true
             })
-            .map {
-                Result.success($0)
-            }
-            .catch {
-                Just(.failure($0))
-            }
             .receive(on: DispatchQueue.main)
+            .result()
             .sink {
                 switch $0 {
                     case .success(let v):
-                        print(v.headers[.contentType] ?? "")
-                        print(v.model)
+                        print(v)
+//                        print(v.headers[.contentType] ?? "")
+//                        print(v.model)
                     case .failure(let error):
                         print(error)
                 }
@@ -98,12 +94,15 @@ extension TransportConfig {
 // middleware
 extension Middleware {
     static let test = Middleware(
-//        barrier: <<<{ _ in Delay(.seconds(5)).eraseToAnyPublisher() },
+        barrier: <<<{ _ in delay(.seconds(1)) },
         headers:
             <<<{ _ in Headers([.authorization: Authorization.basic(login: "John", password: "Doe")]) },
             .auth(yes: true),
         validate: .statusCode,
-        recover: .retryAfter(interval: .seconds(3))
+        recover: .retryAfter(interval: .seconds(3)),
+        success: <<<{
+            print($1)
+        }
     )
 }
 
@@ -111,10 +110,7 @@ extension Middleware {
 
 extension Middleware.Recover {
     static func retryAfter(interval: DispatchTimeInterval) -> Self {
-        Self { _, _ in
-            Delay(interval).setFailureType(to: Error.self).eraseToAnyPublisher()
-//            after(seconds: seconds).then { _ -> Promise<Void> in .value(()) }
-        }
+        Self { _, _ in delay(interval) }
     }
 }
 
@@ -143,8 +139,8 @@ struct TestResource: Creatable {
 protocol ApiOperation: Iris.Operation {}
 
 extension ApiOperation {
-//    var url: String { "https://reqbin.com/echo/post/json" }
-        var url: String { "https://google.ru" }
+    var url: String { "https://reqbin.com/echo/post/json" }
+//        var url: String { "https://google.ru" }
     //    var url: String { "https://exampleqqq.com" }
 }
 
@@ -219,5 +215,21 @@ struct Delay: Publisher {
 
     func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
         future.receive(subscriber: subscriber)
+    }
+}
+
+func delay<Failure>(_ delayInterval: DispatchTimeInterval) -> AnyPublisher<Void, Failure> {
+    Delay(delayInterval).setFailureType(to: Failure.self).eraseToAnyPublisher()
+}
+
+extension Publisher {
+    func result() -> AnyPublisher<Result<Output, Failure>, Never> {
+        map {
+            Result.success($0)
+        }
+        .catch {
+            Just(.failure($0))
+        }
+        .eraseToAnyPublisher()
     }
 }

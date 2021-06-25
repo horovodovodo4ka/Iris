@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 public typealias OperationCancellation = (() -> Void)
 public typealias OperationResult = (response: HTTPURLResponse, data: Data)
@@ -19,8 +20,5 @@ public struct CallContext {
 }
 
 public protocol Executor {
-    func execute(context: CallContext,
-                 data requestData: () throws -> Data?,
-                 response: @escaping (Result<OperationResult, Error>) -> Void
-    ) throws -> OperationCancellation
+    func execute(context: CallContext, data requestData: () throws -> Data?) -> AnyPublisher<OperationResult, Swift.Error>
 }

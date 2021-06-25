@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import PromiseKit
 import Combine
 
 public final class Transport {
@@ -127,12 +126,7 @@ public final class Transport {
         let barrier = barrier(operation: operation).setFailureType(to: Error.self)
 
         let request = barrier.flatMap {
-            Future<OperationResult, Error> { complete in
-                onCancel = try self.executor.execute(context: context, data: requestData, response: {
-                    complete($0)
-                })
-            }
-            .handleEvents(receiveCancel: onCancel)
+            self.executor.execute(context: context, data: requestData)
         }
 
         let validate = request
@@ -154,7 +148,12 @@ public final class Transport {
                 )
             }
 
-        let error = validate.catch { e -> Fail<MetaResponse<ResponseType>, Exception> in
+        let success = validate.map { result -> MetaResponse<ResponseType> in
+            self.middlewares.flatMap { $0.success }.forEach { $0(operation: operation, result: result.model) }
+            return result
+        }
+
+        let error = success.catch { e -> Fail<MetaResponse<ResponseType>, Exception> in
             let error = Exception(cause: e, context: callSite)
 
             logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)

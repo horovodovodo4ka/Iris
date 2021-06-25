@@ -25,8 +25,6 @@ Pod::Spec.new do |s|
 
   s.subspec 'Core' do |sp|
     sp.source_files = 'Iris/Classes/Core/**/*.{swift}'
-
-    sp.dependency 'PromiseKit', '~> 6.15'
   end
 
   s.subspec 'Alamofire' do |sp|

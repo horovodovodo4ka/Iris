@@ -8,23 +8,13 @@ PODS:
   - Iris-iOS/Alamofire (1.5.0):
     - Alamofire (~> 5.1)
     - Iris-iOS/Core
-  - Iris-iOS/Core (1.5.0):
-    - PromiseKit (~> 6.15)
+  - Iris-iOS/Core (1.5.0)
   - Iris-iOS/Defaults (1.5.0):
     - Iris-iOS/Core
   - Iris-iOS/Logging (1.5.0):
     - Astaroth (~> 0.5)
     - Iris-iOS/Core
   - Nimble (9.2.0)
-  - PromiseKit (6.15.3):
-    - PromiseKit/CorePromise (= 6.15.3)
-    - PromiseKit/Foundation (= 6.15.3)
-    - PromiseKit/UIKit (= 6.15.3)
-  - PromiseKit/CorePromise (6.15.3)
-  - PromiseKit/Foundation (6.15.3):
-    - PromiseKit/CorePromise
-  - PromiseKit/UIKit (6.15.3):
-    - PromiseKit/CorePromise
   - Quick (4.0.0)
   - SwiftLint (0.43.1)
 
@@ -39,7 +29,6 @@ SPEC REPOS:
   trunk:
     - Alamofire
     - Astaroth
-    - PromiseKit
     - Quick
     - SwiftLint
 
@@ -58,9 +47,8 @@ CHECKOUT OPTIONS:
 SPEC CHECKSUMS:
   Alamofire: e447a2774a40c996748296fa2c55112fdbbc42f9
   Astaroth: 5f57410934a28bb7d25350a4366680af13737d3d
-  Iris-iOS: 680a5c1d6b1b6ede699245782dfd458f14d38a5a
+  Iris-iOS: 4b22386ff8722dc577e6a30749ab80027da69be9
   Nimble: 4f4a345c80b503b3ea13606a4f98405974ee4d0b
-  PromiseKit: 3b2b6995e51a954c46dbc550ce3da44fbfb563c5
   Quick: 6473349e43b9271a8d43839d9ba1c442ed1b7ac4
   SwiftLint: 99f82d07b837b942dd563c668de129a03fc3fb52
 

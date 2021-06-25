@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import PromiseKit
 
 public protocol Operation {
     var url: String { get }

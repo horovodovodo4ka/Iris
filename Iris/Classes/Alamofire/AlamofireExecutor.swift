@@ -7,7 +7,7 @@
 
 import Foundation
 import Alamofire
-import PromiseKit
+import Combine
 
 private let nullString = "(null)"
 private let separatorString = "*******************************"
@@ -27,46 +27,43 @@ public struct AlamofireExecutor: Executor {
         self.logger = loggingConfig
     }
 
+    public func execute(context: CallContext, data requestData: () throws -> Data?) -> AnyPublisher<OperationResult, Swift.Error> {
 
-    public func execute(
-        context: CallContext,
-        data requestData: () throws -> Data?,
-        response: @escaping (Swift.Result<OperationResult, Swift.Error>) -> Void) throws -> OperationCancellation {
+        do {
+            var urlRequest = try URLRequest(url: context.url, method: context.method.alamofire)
+            urlRequest.allHTTPHeaderFields = context.headers
+            urlRequest.httpBody = try requestData()
 
-        var urlRequest = try URLRequest(url: context.url, method: context.method.alamofire)
-        urlRequest.allHTTPHeaderFields = context.headers
-        urlRequest.httpBody = try requestData()
+            let request = AF.request(urlRequest)
 
-        let request = AF.request(urlRequest)
+            // logging
+            logger.logRequest(request: urlRequest, context: context)
+            //
 
-        // logging
-        logger.logRequest(request: urlRequest, context: context)
-        //
+            return request
+                .publishData()
+                .handleEvents(receiveOutput: {
+                    // logging
+                    let responseInfo = ResponseInfo(
+                        httpResponse: $0.response,
+                        data: $0.data,
+                        elapsedTime: request.metrics?.taskInterval.duration ?? 0.0,
+                        error: $0.error
+                    )
 
-        request
-            .responseData { ret in
-                // logging
-                let responseInfo = ResponseInfo(
-                    httpResponse: ret.response,
-                    data: ret.data,
-                    elapsedTime: request.metrics?.taskInterval.duration ?? 0.0,
-                    error: ret.error
-                )
-                self.logger.logResponse(request: ret.request, response: responseInfo, context: context)
-                //
-
-                switch ret.result {
-                    case .success(let value):
-                        response(.success((request.response!, value)))
-                    case .failure(let error):
-                        response(.failure(error))
+                    self.logger.logResponse(request: $0.request, response: responseInfo, context: context)
+                })
+                .tryMap {
+                    switch $0.result {
+                        case .success(let data):
+                            return ($0.response!, data)
+                        case .failure(let error):
+                            throw error as Error
+                    }
                 }
-            }
-
-        return {
-            if !request.isFinished {
-                request.cancel()
-            }
+                .eraseToAnyPublisher()
+        } catch {
+            return Fail(error: error).eraseToAnyPublisher()
         }
     }
 }

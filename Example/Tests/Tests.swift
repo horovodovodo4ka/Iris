@@ -74,16 +74,16 @@ class BasicInteractions: QuickSpec {
 }
 
 // MARK: -
-prefix operator ^
+//prefix operator ^
 
-import PromiseKit
-extension PromiseKit.Result {
-    static prefix func ^ (lhs: Self) -> Swift.Result<T, Error> {
-        switch lhs {
-            case .fulfilled(let value):
-                return .success(value)
-            case .rejected(let error):
-                return .failure(error)
-        }
-    }
-}
+//import PromiseKit
+//extension PromiseKit.Result {
+//    static prefix func ^ (lhs: Self) -> Swift.Result<T, Error> {
+//        switch lhs {
+//            case .fulfilled(let value):
+//                return .success(value)
+//            case .rejected(let error):
+//                return .failure(error)
+//        }
+//    }
+//}
