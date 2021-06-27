@@ -8,41 +8,55 @@
 
 import UIKit
 import Iris
-import PromiseKit
+import Combine
 
 class ViewController: UIViewController {
+    private var scope = [AnyCancellable]()
+
+    let transport = Transport(
+        configuration: .default,
+        executor: URLSessionExecutor())
+
+    @IBOutlet weak var startButton: UIButton!
+    @IBOutlet weak var cancelButton: UIButton!
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-
-        let transport = Transport(
-            configuration: .default,
-            executor: AlamofireExecutor())
 
         transport.add(middlware: .test)
 
-        let f = transport.executeWithMeta(TestOperation())
-            .done { v in
-                print(v.headers[.contentType] ?? "")
-                print(v.model)
-            }
-            .catch { e in
-                print(e.localizedDescription)
-            }
-
-//        after(seconds: 3).done {
-//            f.cancel()
-//        }
-
-//        _ = TestResource(transport: transport)
-//            .create(entity: TestOperation.Request())
-//            .tap {
-//                print($0)
-//            }
+        cancelButton.isEnabled = false
 
     }
 
+    @IBAction func start() {
+        cancelButton.isEnabled = true
+        startButton.isEnabled = false
+
+        let op = TestResource(transport: transport).create(entity: TestOperation.Request())
+
+        //        let op = transport.execute(TestOperation())
+
+        op
+            .receive(on: DispatchQueue.main)
+            .sink {
+                switch $0 {
+                    case .finished:
+                        self.cancelButton.isEnabled = false
+                        self.startButton.isEnabled = true
+                    case .failure(let error):
+                        print(error)
+                }
+            } receiveValue: {
+                print($0)
+            }
+            .store(in: &scope)
+
+    }
+
+    @IBAction func cancel() {
+        scope = []
+    }
 }
 
 // transport
@@ -58,22 +72,25 @@ extension TransportConfig {
 // middleware
 extension Middleware {
     static let test = Middleware(
-        barrier: <<<{ _ in after(seconds: 5).map { () } },
+        barrier:
+                <<<{ _ in delay(.seconds(1)) },
         headers:
-            <<<{ _ in Headers([.authorization: Authorization.basic(login: "John", password: "Doe")]) },
-            .auth(yes: true),
-        validate: .statusCode,
-        recover: .retryAfter(seconds: 3)
+                <<<{ _ in Headers(.authorization(.basic(login: "John", password: "Doe"))) },
+                .auth(yes: true),
+        validate:
+                .statusCode,
+        recover:
+                .retryAfter(interval: .seconds(3)),
+        success:
+                <<<{ print($1 as Any) }
     )
 }
 
 //
 
 extension Middleware.Recover {
-    static func retryAfter(seconds: TimeInterval) -> Self {
-        Self { _, _ in
-            after(seconds: seconds).then { _ -> Promise<Void> in .value(()) }
-        }
+    static func retryAfter(interval: DispatchTimeInterval) -> Self {
+        Self { _, _ in delay(interval) }
     }
 }
 
@@ -81,13 +98,15 @@ extension Middleware.RequestHeaders {
     static func auth(yes: @escaping @autoclosure () -> Bool) -> Self {
         Self { _ in
             guard yes() else { return .empty }
-            return Headers([.authorization: Authorization.bearer(token: "ABCDEF01234567890")])
+            return Headers(.authorization(.bearer("ABCDEF01234567890")))
         }
     }
 }
 
 // resource
 struct TestResource: Creatable {
+    var url: String { "https://reqbin.com/echo/post/json" }
+
     let transport: Transport
 
     typealias ModelType = TestOperation.ResponseType
@@ -102,8 +121,8 @@ struct TestResource: Creatable {
 protocol ApiOperation: Iris.Operation {}
 
 extension ApiOperation {
-    var url: String { "https://reqbin.com/echo/post/json" }
-    //    var url: String { "https://google.ru" }
+    //    var url: String { "https://reqbin.com/echo/post/json" }
+    var url: String { "https://google.ru" }
     //    var url: String { "https://exampleqqq.com" }
 }
 
@@ -112,8 +131,8 @@ struct TestOperation: ApiOperation, ReadOperation, WriteOperation {
     let headers = Headers.empty
 
     // MARK: Read
-    typealias ResponseType = String
-    //    typealias ResponseType = Response
+    //    typealias ResponseType = String
+    typealias ResponseType = Response
 
     struct Response: Decodable {
         var success: String
@@ -143,13 +162,13 @@ struct TestOperation: ApiOperation, ReadOperation, WriteOperation {
 
 extension TestOperation: PostOperation {}
 
-extension TestOperation: IndirectModelOperation {
-    var responseRelativePath: String { ".success" }
-}
+// extension TestOperation {
+//    var responseRelativePath: String? { ".success" }
+// }
 
 enum Authorization: CustomStringConvertible {
     case basic(login: String, password: String)
-    case bearer(token: String)
+    case bearer(_ token: String)
 
     var description: String {
         switch self {
@@ -160,4 +179,33 @@ enum Authorization: CustomStringConvertible {
                 return "Bearer \(token)"
         }
     }
+}
+
+extension Header {
+    static func authorization(_ auth: Authorization) -> Self {
+        Header(key: HeaderKey(name: "Authorization"), value: auth)
+    }
+}
+
+struct Delay: Publisher {
+    typealias Output = Void
+    typealias Failure = Never
+
+    private let future: Future<Output, Failure>
+
+    init(_ delayInterval: DispatchTimeInterval) {
+        future = Future { complete in
+            DispatchQueue.global().asyncAfter(deadline: .now() + delayInterval) {
+                complete(.success(()))
+            }
+        }
+    }
+
+    func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
+        future.receive(subscriber: subscriber)
+    }
+}
+
+func delay<Failure>(_ delayInterval: DispatchTimeInterval) -> AnyPublisher<Void, Failure> {
+    Delay(delayInterval).setFailureType(to: Failure.self).eraseToAnyPublisher()
 }

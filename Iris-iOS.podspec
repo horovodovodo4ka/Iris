@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Iris-iOS'
-  s.version          = '1.5.0'
+  s.version          = '2.0.0'
   s.summary          = 'Protocol based network abstraction layer'
   s.description      = <<-DESC
     Protocol based network abstraction layer.
@@ -20,21 +20,27 @@ Pod::Spec.new do |s|
   s.source           = { :git => 'https://github.com/horovodovodo4ka/Iris.git', :tag => s.version.to_s }
 
   s.module_name = 'Iris'
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '13.0'
   s.swift_version = '5.4'
 
   s.subspec 'Core' do |sp|
     sp.source_files = 'Iris/Classes/Core/**/*.{swift}'
-
-    sp.dependency 'PromiseKit', '~> 6.15'
   end
 
   s.subspec 'Alamofire' do |sp|
-    sp.source_files = 'Iris/Classes/Alamofire/**/*.{swift}'
+      sp.source_files = 'Iris/Classes/Alamofire/**/*.{swift}'
 
-    sp.dependency 'Iris-iOS/Core'
-    
-    sp.dependency 'Alamofire', '~> 5.1'
+      sp.dependency 'Iris-iOS/Core'
+      sp.dependency 'Iris-iOS/Logging'
+
+      sp.dependency 'Alamofire', '~> 5.1'
+  end
+
+  s.subspec 'URLSession' do |sp|
+      sp.source_files = 'Iris/Classes/URLSession/**/*.{swift}'
+
+      sp.dependency 'Iris-iOS/Core'
+      sp.dependency 'Iris-iOS/Logging'
   end
 
   s.subspec 'Logging' do |sp|
@@ -51,6 +57,6 @@ Pod::Spec.new do |s|
       sp.dependency 'Iris-iOS/Core'
   end
 
-  s.default_subspecs = 'Core', 'Logging', 'Alamofire'
+  s.default_subspecs = 'Core', 'URLSession'
   
 end

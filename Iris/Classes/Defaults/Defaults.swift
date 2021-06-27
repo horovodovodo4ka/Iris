@@ -47,7 +47,7 @@ public enum HTTPError: Swift.Error, LocalizedError {
 
 public extension Middleware.Validator {
     static let statusCode = Self {
-        let statusCode = $1.response.statusCode
+        guard let statusCode = $1.response?.statusCode else { return }
         
         switch statusCode {
             case 100..<300:

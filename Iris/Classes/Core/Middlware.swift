@@ -6,29 +6,34 @@
 //
 
 import Foundation
-import PromiseKit
+import Combine
 
 public struct Middleware {
-    public init(barrier: Barrier..., headers: RequestHeaders..., validate: Validator..., recover: Recover...) {
+    public init(barrier: Barrier..., headers: RequestHeaders...,
+                validate: Validator..., recover: Recover...,
+                success: Success...) {
         self.barrier = barrier
         self.headers = headers
         self.validate = validate
         self.recover = recover
+        self.success = success
     }
 
     let barrier: [Barrier]
     let headers: [RequestHeaders]
     let validate: [Validator]
     let recover: [Recover]
+    let success: [Success]
 }
 
 // MARK: -
 
-public typealias OperationBarrier = (Operation) -> Promise<Void>
+public typealias OperationBarrier = (Operation) -> AnyPublisher<Void, Never>
 public typealias OparationHeaders = (Operation) -> Iris.Headers
-public typealias RawOperationResult = (response: HTTPURLResponse, headers: Headers, data: Data)
+public typealias RawOperationResult = (response: HTTPURLResponse?, headers: Headers, data: Data)
 public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
-public typealias OperationRecover = (Operation, Error) throws -> Promise<Void>
+public typealias OperationRecover = (Operation, Error) throws -> AnyPublisher<Void, Error>
+public typealias OperationSucces = (Operation, Any?) -> Void
 
 public extension Middleware {
 
@@ -38,7 +43,7 @@ public extension Middleware {
             self.barrier = barrier
         }
 
-        public func callAsFunction(operation: Operation) -> Promise<Void> {
+        public func callAsFunction(operation: Operation) -> AnyPublisher<Void, Never> {
             barrier(operation)
         }
     }
@@ -71,8 +76,19 @@ public extension Middleware {
             self.recover = recover
         }
 
-        public func callAsFunction(operation: Operation, error: Error) throws -> Promise<Void> {
+        public func callAsFunction(operation: Operation, error: Error) throws -> AnyPublisher<Void, Error> {
             try recover(operation, error)
+        }
+    }
+
+    struct Success {
+        private let success: OperationSucces
+        public init(_ recover: @escaping OperationSucces) {
+            self.success = recover
+        }
+
+        public func callAsFunction(operation: Operation, result: Any?) {
+            success(operation, result)
         }
     }
 }
@@ -91,6 +107,10 @@ public prefix func <<< (what: @escaping OperationValidator) -> Middleware.Valida
 
 public prefix func <<< (what: @escaping OperationRecover) -> Middleware.Recover {
     Middleware.Recover(what)
+}
+
+public prefix func <<< (what: @escaping OperationSucces) -> Middleware.Success {
+    Middleware.Success(what)
 }
 
 prefix operator <<<

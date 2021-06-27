@@ -5,7 +5,7 @@ import Quick
 import Nimble
 import Iris
 
-struct TestOperation: ReadOperation, WriteOperation, PostOperation, IndirectModelOperation {
+struct TestOperation: ReadOperation, WriteOperation, PostOperation {
     // MARK: Operation
     let headers: Headers = .empty
 
@@ -47,26 +47,26 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation, IndirectMode
 
 class BasicInteractions: QuickSpec {
     override func spec() {
-        let transport = Transport(
-            configuration: TransportConfig(printer: NoopPrinter(), encoder: Json.encoder, decoder: Json.decoder),
-            executor: AlamofireExecutor()
-        )
+//        let transport = Transport(
+//            configuration: TransportConfig(printer: NoopPrinter(), encoder: Json.encoder, decoder: Json.decoder),
+//            executor: AlamofireExecutor()
+//        )
 
         describe("Basic interactions") {
             it("Send and resieves JSON, response decoded with json path") {
 
-                waitUntil(timeout: .seconds(6)) { done in
-                    let flow = transport.execute(TestOperation(url: "https://reqbin.com/echo/post/json"))
-
-                    DispatchQueue.global().async {
-                        Thread.sleep(forTimeInterval: 5)
-
-                        expect(flow.result.map { ^$0 }).to(beSuccess { value in
-                            expect(value).to(equal("true"))
-                        })
-
-                        done()
-                    }
+                waitUntil(timeout: .seconds(6)) { _ in
+//                    let flow = transport.execute(TestOperation(url: "https://reqbin.com/echo/post/json"))
+//
+//                    DispatchQueue.global().async {
+//                        Thread.sleep(forTimeInterval: 5)
+//
+//                        expect(flow.result.map { ^$0 }).to(beSuccess { value in
+//                            expect(value).to(equal("true"))
+//                        })
+//
+//                        done()
+//                    }
                 }
             }
         }
@@ -74,16 +74,16 @@ class BasicInteractions: QuickSpec {
 }
 
 // MARK: -
-prefix operator ^
+// prefix operator ^
 
-import PromiseKit
-extension PromiseKit.Result {
-    static prefix func ^ (lhs: Self) -> Swift.Result<T, Error> {
-        switch lhs {
-            case .fulfilled(let value):
-                return .success(value)
-            case .rejected(let error):
-                return .failure(error)
-        }
-    }
-}
+// import PromiseKit
+// extension PromiseKit.Result {
+//    static prefix func ^ (lhs: Self) -> Swift.Result<T, Error> {
+//        switch lhs {
+//            case .fulfilled(let value):
+//                return .success(value)
+//            case .rejected(let error):
+//                return .failure(error)
+//        }
+//    }
+// }
