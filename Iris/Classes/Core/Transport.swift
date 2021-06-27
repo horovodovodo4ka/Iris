@@ -87,12 +87,12 @@ public final class Transport {
     private func decode<O: ReadOperation>(operation: O, data: Data) throws -> O.ResponseType {
         let decoder = self.configuration.decoder()
 
-        if let path = operation.responseRelativePath {
+        if let traverable = operation as? IndirectResponseOperation {
             guard let traverser = decoder as? ResponseTraversalDecoder else {
-                throw TransportError.indirectRequiresTraverser(operation.operationType, type(of: decoder))
+                throw TransportError.indirectRequiresTraverser(type(of: operation), type(of: decoder))
             }
 
-            return try traverser.decode(O.ResponseType.self, from: data, at: path)
+            return try traverser.decode(O.ResponseType.self, from: data, at: traverable.responseRelativePath)
         } else {
 
             return try decoder.decode(O.ResponseType.self, from: data)

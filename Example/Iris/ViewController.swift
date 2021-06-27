@@ -30,32 +30,33 @@ class ViewController: UIViewController {
     }
 
     @IBAction func start() {
-        cancelButton.isEnabled = true
-        startButton.isEnabled = false
 
-        let op = TestResource(transport: transport).create(entity: TestOperation.Request())
+//        let op = TestResource(transport: transport).create(entity: TestOperation.Request())
 
-        //        let op = transport.execute(TestOperation())
+        let op = transport.execute(TestOperation())
 
-        op
-            .receive(on: DispatchQueue.main)
+        op.receive(on: DispatchQueue.main)
             .sink {
-                switch $0 {
-                    case .finished:
-                        self.cancelButton.isEnabled = false
-                        self.startButton.isEnabled = true
-                    case .failure(let error):
-                        print(error)
+                if case .failure(let error) = $0 {
+                    print(error)
                 }
+                self.cancel()
             } receiveValue: {
                 print($0)
             }
             .store(in: &scope)
 
+        redraw()
     }
 
     @IBAction func cancel() {
         scope = []
+        redraw()
+    }
+
+    private func redraw() {
+        self.cancelButton.isEnabled = !scope.isEmpty
+        self.startButton.isEnabled = scope.isEmpty
     }
 }
 
@@ -105,7 +106,6 @@ extension Middleware.RequestHeaders {
 
 // resource
 struct TestResource: Creatable {
-    var url: String { "https://reqbin.com/echo/post/json" }
 
     let transport: Transport
 
@@ -121,8 +121,8 @@ struct TestResource: Creatable {
 protocol ApiOperation: Iris.Operation {}
 
 extension ApiOperation {
-    //    var url: String { "https://reqbin.com/echo/post/json" }
-    var url: String { "https://google.ru" }
+        var url: String { "https://reqbin.com/echo/post/json" }
+//    var url: String { "https://google.ru" }
     //    var url: String { "https://exampleqqq.com" }
 }
 
@@ -131,8 +131,8 @@ struct TestOperation: ApiOperation, ReadOperation, WriteOperation {
     let headers = Headers.empty
 
     // MARK: Read
-    //    typealias ResponseType = String
-    typealias ResponseType = Response
+        typealias ResponseType = String
+//    typealias ResponseType = Response
 
     struct Response: Decodable {
         var success: String
@@ -162,9 +162,11 @@ struct TestOperation: ApiOperation, ReadOperation, WriteOperation {
 
 extension TestOperation: PostOperation {}
 
-// extension TestOperation {
-//    var responseRelativePath: String? { ".success" }
-// }
+extension TestOperation: IndirectResponseOperation {
+    var responseRelativePath: String { ".success" }
+}
+
+// some sample data
 
 enum Authorization: CustomStringConvertible {
     case basic(login: String, password: String)

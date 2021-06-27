@@ -22,13 +22,18 @@ public protocol HTTPOperation: Operation {
 public protocol ReadOperation: HTTPOperation {
     associatedtype ResponseType: Decodable
 
-    var responseRelativePath: String? { get }
 }
 
 public protocol WriteOperation: HTTPOperation {
     associatedtype RequestType: Encodable
 
     var request: RequestType { get }
+}
+
+//
+
+public protocol IndirectResponseOperation where Self: Operation {
+    var responseRelativePath: String { get }
 }
 
 //
