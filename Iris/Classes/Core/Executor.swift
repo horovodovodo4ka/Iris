@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 public typealias OperationCancellation = (() -> Void)
-public typealias OperationResult = (response: HTTPURLResponse, data: Data)
+public typealias OperationResult = (response: HTTPURLResponse?, data: Data)
 
 public struct CallContext {
     let url: String

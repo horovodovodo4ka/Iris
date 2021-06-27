@@ -28,11 +28,19 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'Alamofire' do |sp|
-    sp.source_files = 'Iris/Classes/Alamofire/**/*.{swift}'
+      sp.source_files = 'Iris/Classes/Alamofire/**/*.{swift}'
 
-    sp.dependency 'Iris-iOS/Core'
-    
-    sp.dependency 'Alamofire', '~> 5.1'
+      sp.dependency 'Iris-iOS/Core'
+      sp.dependency 'Iris-iOS/Logging'
+
+      sp.dependency 'Alamofire', '~> 5.1'
+  end
+
+  s.subspec 'URLSession' do |sp|
+      sp.source_files = 'Iris/Classes/URLSession/**/*.{swift}'
+
+      sp.dependency 'Iris-iOS/Core'
+      sp.dependency 'Iris-iOS/Logging'
   end
 
   s.subspec 'Logging' do |sp|
@@ -49,6 +57,6 @@ Pod::Spec.new do |s|
       sp.dependency 'Iris-iOS/Core'
   end
 
-  s.default_subspecs = 'Core', 'Logging', 'Alamofire'
+  s.default_subspecs = 'Core', 'URLSession'
   
 end

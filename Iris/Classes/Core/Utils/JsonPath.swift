@@ -121,3 +121,7 @@ public class JsonPath<T: Decodable>: Decodable {
         return try decode(tokens)
     }
 }
+
+public extension ReadOperation {
+    var responseRelativePath: String? { nil }
+}

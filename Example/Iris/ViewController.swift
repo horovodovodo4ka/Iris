@@ -11,41 +11,19 @@ import Iris
 import Combine
 
 class ViewController: UIViewController {
-    private var store = [AnyCancellable]()
+    private var scope = [AnyCancellable]()
+
     let transport = Transport(
         configuration: .default,
-        executor: AlamofireExecutor())
+        executor: URLSessionExecutor())
 
     @IBOutlet weak var startButton: UIButton!
     @IBOutlet weak var cancelButton: UIButton!
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-
 
         transport.add(middlware: .test)
-
-        // cancel
-//        store = []
-
-//            .done { v in
-//                print(v.headers[.contentType] ?? "")
-//                print(v.model)
-//            }
-//            .catch { e in
-//                print(e.localizedDescription)
-//            }
-
-//        after(seconds: 3).done {
-//            f.cancel()
-//        }
-
-//        _ = TestResource(transport: transport)
-//            .create(entity: TestOperation.Request())
-//            .tap {
-//                print($0)
-//            }
 
         cancelButton.isEnabled = false
 
@@ -55,29 +33,43 @@ class ViewController: UIViewController {
         cancelButton.isEnabled = true
         startButton.isEnabled = false
 
-        transport.execute(TestOperation())
-            .handleEvents(receiveCancel: {
-                self.cancelButton.isEnabled = false
-                self.startButton.isEnabled = true
-            })
+        let op = TestResource(transport: transport).create(entity: TestOperation.Request())
+
+        //        let op = transport.execute(TestOperation())
+
+        op
             .receive(on: DispatchQueue.main)
-            .result()
+            .finally {
+
+            }
             .sink {
                 switch $0 {
-                    case .success(let v):
-                        print(v)
-//                        print(v.headers[.contentType] ?? "")
-//                        print(v.model)
+                    case .finished:
+                        self.cancelButton.isEnabled = false
+                        self.startButton.isEnabled = true
                     case .failure(let error):
                         print(error)
                 }
+            } receiveValue: {
+                print($0)
             }
-            .store(in: &store)
+//            .result()
+//            .sink {
+//                switch $0 {
+//                    case .success(let v):
+//                        print(v)
+//                        //                        print(v.headers[.contentType] ?? "")
+//                        //                        print(v.model)
+//                    case .failure(let error):
+//                        print(error)
+//                }
+//            }
+            .store(in: &scope)
 
     }
 
     @IBAction func cancel() {
-        store = []
+        scope = []
     }
 }
 
@@ -94,15 +86,17 @@ extension TransportConfig {
 // middleware
 extension Middleware {
     static let test = Middleware(
-        barrier: <<<{ _ in delay(.seconds(1)) },
+        barrier:
+                <<<{ _ in delay(.seconds(1)) },
         headers:
-            <<<{ _ in Headers([.authorization: Authorization.basic(login: "John", password: "Doe")]) },
-            .auth(yes: true),
-        validate: .statusCode,
-        recover: .retryAfter(interval: .seconds(3)),
-        success: <<<{
-            print($1)
-        }
+                <<<{ _ in Headers(.authorization(.basic(login: "John", password: "Doe"))) },
+                .auth(yes: true),
+        validate:
+                .statusCode,
+        recover:
+                .retryAfter(interval: .seconds(3)),
+        success:
+                <<<{ print($1 as Any) }
     )
 }
 
@@ -118,13 +112,15 @@ extension Middleware.RequestHeaders {
     static func auth(yes: @escaping @autoclosure () -> Bool) -> Self {
         Self { _ in
             guard yes() else { return .empty }
-            return Headers([.authorization: Authorization.bearer(token: "ABCDEF01234567890")])
+            return Headers(.authorization(.bearer(token: "ABCDEF01234567890")))
         }
     }
 }
 
 // resource
 struct TestResource: Creatable {
+    var url: String { "https://reqbin.com/echo/post/json" }
+
     let transport: Transport
 
     typealias ModelType = TestOperation.ResponseType
@@ -139,8 +135,8 @@ struct TestResource: Creatable {
 protocol ApiOperation: Iris.Operation {}
 
 extension ApiOperation {
-    var url: String { "https://reqbin.com/echo/post/json" }
-//        var url: String { "https://google.ru" }
+    //    var url: String { "https://reqbin.com/echo/post/json" }
+    var url: String { "https://google.ru" }
     //    var url: String { "https://exampleqqq.com" }
 }
 
@@ -149,8 +145,8 @@ struct TestOperation: ApiOperation, ReadOperation, WriteOperation {
     let headers = Headers.empty
 
     // MARK: Read
-    typealias ResponseType = String
-    //    typealias ResponseType = Response
+    //    typealias ResponseType = String
+    typealias ResponseType = Response
 
     struct Response: Decodable {
         var success: String
@@ -180,9 +176,9 @@ struct TestOperation: ApiOperation, ReadOperation, WriteOperation {
 
 extension TestOperation: PostOperation {}
 
-extension TestOperation: IndirectModelOperation {
-    var responseRelativePath: String { ".success" }
-}
+//extension TestOperation {
+//    var responseRelativePath: String? { ".success" }
+//}
 
 enum Authorization: CustomStringConvertible {
     case basic(login: String, password: String)
@@ -196,6 +192,12 @@ enum Authorization: CustomStringConvertible {
             case let .bearer(token):
                 return "Bearer \(token)"
         }
+    }
+}
+
+extension Header {
+    static func authorization(_ auth: Authorization) -> Self {
+        Header(key: HeaderKey.authorization, value: auth)
     }
 }
 
@@ -223,6 +225,10 @@ func delay<Failure>(_ delayInterval: DispatchTimeInterval) -> AnyPublisher<Void,
 }
 
 extension Publisher {
+    func finally(_ block: @escaping () -> Void) -> AnyPublisher<Output, Failure> {
+        handleEvents(receiveCompletion: { _ in block() }, receiveCancel: { block() }).eraseToAnyPublisher()
+    }
+
     func result() -> AnyPublisher<Result<Output, Failure>, Never> {
         map {
             Result.success($0)
@@ -233,3 +239,7 @@ extension Publisher {
         .eraseToAnyPublisher()
     }
 }
+
+//extension Publisher {
+//    func done()
+//}

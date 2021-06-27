@@ -87,12 +87,12 @@ public final class Transport {
     private func decode<O: ReadOperation>(operation: O, data: Data) throws -> O.ResponseType {
         let decoder = self.configuration.decoder()
 
-        if let traversable = operation as? IndirectModelOperation {
+        if let path = operation.responseRelativePath {
             guard let traverser = decoder as? ResponseTraversalDecoder else {
-                throw TransportError.indirectRequiresTraverser(type(of: traversable), type(of: decoder))
+                throw TransportError.indirectRequiresTraverser(operation.operationType, type(of: decoder))
             }
 
-            return try traverser.decode(O.ResponseType.self, from: data, at: traversable.responseRelativePath)
+            return try traverser.decode(O.ResponseType.self, from: data, at: path)
         } else {
 
             return try decoder.decode(O.ResponseType.self, from: data)
@@ -107,17 +107,12 @@ public final class Transport {
 
         let logger = configuration.printer()
 
-        let headers = middlewares
-            .flatMap { $0.headers }
-            .map { $0(operation: operation).values }
-            .reduce([:]) { result, headers in
-                result.merging(headers) { _, new in new }
-            }
-            .merging(operation.headers.values) { _, new in new }
+        let uniqueHeaders = Set(middlewares.flatMap { $0.headers }.flatMap { $0(operation: operation).values })
+        let headers = uniqueHeaders.map { ($0.key.headerName, $0.value) }
 
         let context = CallContext(url: operation.url,
                                   method: operation.method,
-                                  headers: headers,
+                                  headers: Dictionary(uniqueKeysWithValues: headers),
                                   printer: logger,
                                   callSite: callSite)
 
@@ -131,7 +126,7 @@ public final class Transport {
 
         let validate = request
             .tryMap { result -> MetaResponse<ResponseType> in
-                let headers = Headers(raw: result.response.allHeaderFields)
+                let headers = Headers(raw: result.response?.allHeaderFields ?? [:])
                 let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
 
                 for validator in self.middlewares.flatMap({ $0.validate }) {
@@ -222,7 +217,7 @@ public final class Transport {
 // MARK: -
 
 public enum TransportError: Swift.Error, LocalizedError {
-    case indirectRequiresTraverser(IndirectModelOperation.Type, ResponseDecoder.Type)
+    case indirectRequiresTraverser(Operation.Type, ResponseDecoder.Type)
 
     public var errorDescription: String? {
         switch self {

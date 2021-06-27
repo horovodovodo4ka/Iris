@@ -5,7 +5,7 @@ import Quick
 import Nimble
 import Iris
 
-struct TestOperation: ReadOperation, WriteOperation, PostOperation, IndirectModelOperation {
+struct TestOperation: ReadOperation, WriteOperation, PostOperation {
     // MARK: Operation
     let headers: Headers = .empty
 
@@ -47,10 +47,10 @@ struct TestOperation: ReadOperation, WriteOperation, PostOperation, IndirectMode
 
 class BasicInteractions: QuickSpec {
     override func spec() {
-        let transport = Transport(
-            configuration: TransportConfig(printer: NoopPrinter(), encoder: Json.encoder, decoder: Json.decoder),
-            executor: AlamofireExecutor()
-        )
+//        let transport = Transport(
+//            configuration: TransportConfig(printer: NoopPrinter(), encoder: Json.encoder, decoder: Json.decoder),
+//            executor: AlamofireExecutor()
+//        )
 
         describe("Basic interactions") {
             it("Send and resieves JSON, response decoded with json path") {

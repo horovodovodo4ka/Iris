@@ -30,7 +30,7 @@ public struct Middleware {
 
 public typealias OperationBarrier = (Operation) -> AnyPublisher<Void, Never>
 public typealias OparationHeaders = (Operation) -> Iris.Headers
-public typealias RawOperationResult = (response: HTTPURLResponse, headers: Headers, data: Data)
+public typealias RawOperationResult = (response: HTTPURLResponse?, headers: Headers, data: Data)
 public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
 public typealias OperationRecover = (Operation, Error) throws -> AnyPublisher<Void, Error>
 public typealias OperationSucces = (Operation, Any?) -> Void
