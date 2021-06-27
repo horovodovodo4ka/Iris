@@ -1,15 +1,15 @@
 PODS:
   - Astaroth (0.5.0)
-  - Iris-iOS (1.5.0):
-    - Iris-iOS/Core (= 1.5.0)
-    - Iris-iOS/URLSession (= 1.5.0)
-  - Iris-iOS/Core (1.5.0)
-  - Iris-iOS/Defaults (1.5.0):
+  - Iris-iOS (2.0.0):
+    - Iris-iOS/Core (= 2.0.0)
+    - Iris-iOS/URLSession (= 2.0.0)
+  - Iris-iOS/Core (2.0.0)
+  - Iris-iOS/Defaults (2.0.0):
     - Iris-iOS/Core
-  - Iris-iOS/Logging (1.5.0):
+  - Iris-iOS/Logging (2.0.0):
     - Astaroth (~> 0.5)
     - Iris-iOS/Core
-  - Iris-iOS/URLSession (1.5.0):
+  - Iris-iOS/URLSession (2.0.0):
     - Iris-iOS/Core
     - Iris-iOS/Logging
   - Nimble (9.2.0)
@@ -43,7 +43,7 @@ CHECKOUT OPTIONS:
 
 SPEC CHECKSUMS:
   Astaroth: 5f57410934a28bb7d25350a4366680af13737d3d
-  Iris-iOS: 854e4fa95dbee552b533ebb78fdafa74407088ee
+  Iris-iOS: 2c3ea07a6ae321c3eb69c60aa0b1c885a03fa076
   Nimble: 4f4a345c80b503b3ea13606a4f98405974ee4d0b
   Quick: 6473349e43b9271a8d43839d9ba1c442ed1b7ac4
   SwiftLint: 99f82d07b837b942dd563c668de129a03fc3fb52

@@ -39,9 +39,6 @@ class ViewController: UIViewController {
 
         op
             .receive(on: DispatchQueue.main)
-            .finally {
-
-            }
             .sink {
                 switch $0 {
                     case .finished:
@@ -53,17 +50,6 @@ class ViewController: UIViewController {
             } receiveValue: {
                 print($0)
             }
-//            .result()
-//            .sink {
-//                switch $0 {
-//                    case .success(let v):
-//                        print(v)
-//                        //                        print(v.headers[.contentType] ?? "")
-//                        //                        print(v.model)
-//                    case .failure(let error):
-//                        print(error)
-//                }
-//            }
             .store(in: &scope)
 
     }
@@ -112,7 +98,7 @@ extension Middleware.RequestHeaders {
     static func auth(yes: @escaping @autoclosure () -> Bool) -> Self {
         Self { _ in
             guard yes() else { return .empty }
-            return Headers(.authorization(.bearer(token: "ABCDEF01234567890")))
+            return Headers(.authorization(.bearer("ABCDEF01234567890")))
         }
     }
 }
@@ -182,7 +168,7 @@ extension TestOperation: PostOperation {}
 
 enum Authorization: CustomStringConvertible {
     case basic(login: String, password: String)
-    case bearer(token: String)
+    case bearer(_ token: String)
 
     var description: String {
         switch self {
@@ -197,7 +183,7 @@ enum Authorization: CustomStringConvertible {
 
 extension Header {
     static func authorization(_ auth: Authorization) -> Self {
-        Header(key: HeaderKey.authorization, value: auth)
+        Header(key: HeaderKey(name: "Authorization"), value: auth)
     }
 }
 
@@ -223,23 +209,3 @@ struct Delay: Publisher {
 func delay<Failure>(_ delayInterval: DispatchTimeInterval) -> AnyPublisher<Void, Failure> {
     Delay(delayInterval).setFailureType(to: Failure.self).eraseToAnyPublisher()
 }
-
-extension Publisher {
-    func finally(_ block: @escaping () -> Void) -> AnyPublisher<Output, Failure> {
-        handleEvents(receiveCompletion: { _ in block() }, receiveCancel: { block() }).eraseToAnyPublisher()
-    }
-
-    func result() -> AnyPublisher<Result<Output, Failure>, Never> {
-        map {
-            Result.success($0)
-        }
-        .catch {
-            Just(.failure($0))
-        }
-        .eraseToAnyPublisher()
-    }
-}
-
-// extension Publisher {
-//    func done()
-// }
