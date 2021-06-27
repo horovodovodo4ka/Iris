@@ -176,9 +176,9 @@ struct TestOperation: ApiOperation, ReadOperation, WriteOperation {
 
 extension TestOperation: PostOperation {}
 
-//extension TestOperation {
+// extension TestOperation {
 //    var responseRelativePath: String? { ".success" }
-//}
+// }
 
 enum Authorization: CustomStringConvertible {
     case basic(login: String, password: String)
@@ -240,6 +240,6 @@ extension Publisher {
     }
 }
 
-//extension Publisher {
+// extension Publisher {
 //    func done()
-//}
+// }

@@ -87,7 +87,7 @@ public extension Middleware {
             self.success = recover
         }
 
-        public func callAsFunction(operation: Operation, result: Any?) -> Void {
+        public func callAsFunction(operation: Operation, result: Any?) {
             success(operation, result)
         }
     }

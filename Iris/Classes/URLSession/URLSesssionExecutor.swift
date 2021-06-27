@@ -8,7 +8,6 @@
 import Foundation
 import Combine
 
-
 public class URLSessionExecutor: Executor {
 
     public enum Error: LocalizedError {
@@ -87,13 +86,11 @@ public class URLSessionExecutor: Executor {
                     }
                 }
                 .eraseToAnyPublisher()
-        }
-        catch {
+        } catch {
             return Fail(error: error).eraseToAnyPublisher()
         }
     }
 }
-
 
 private extension DispatchTime {
     func measure() -> TimeInterval {

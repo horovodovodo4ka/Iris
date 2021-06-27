@@ -8,7 +8,6 @@
 import Foundation
 import Combine
 
-
 public protocol Resource {
     var transport: Transport { get }
 

@@ -47,7 +47,7 @@ public struct DefaultExecutorPrinter: ExecutorPrinter {
         let openSeparator = options.contains(.includeSeparator) ? "\(separatorString)\n" : ""
         let closeSeparator = options.contains(.includeSeparator) ? "\n\(separatorString)" : ""
 
-        switch (level) {
+        switch level {
             case .all:
                 let prettyPrint = options.contains(.jsonPrettyPrint)
                 let body = string(from: request.httpBody, prettyPrint: prettyPrint) ?? nullString
@@ -137,15 +137,13 @@ public struct DefaultExecutorPrinter: ExecutorPrinter {
             return nil
         }
 
-        var response: String? = nil
+        var response: String?
 
         if prettyPrint,
            let json = try? JSONSerialization.jsonObject(with: data, options: []),
            let prettyString = prettyPrintedString(from: json) {
             response = prettyString
-        }
-
-        else if let dataString = String.init(data: data, encoding: .utf8) {
+        } else if let dataString = String.init(data: data, encoding: .utf8) {
             response = dataString
         }
 
@@ -157,7 +155,7 @@ public struct DefaultExecutorPrinter: ExecutorPrinter {
             return nil
         }
 
-        var response: String? = nil
+        var response: String?
 
         if let data = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted),
            let dataString = String.init(data: data, encoding: .utf8) {

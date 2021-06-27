@@ -55,7 +55,7 @@ class BasicInteractions: QuickSpec {
         describe("Basic interactions") {
             it("Send and resieves JSON, response decoded with json path") {
 
-                waitUntil(timeout: .seconds(6)) { done in
+                waitUntil(timeout: .seconds(6)) { _ in
 //                    let flow = transport.execute(TestOperation(url: "https://reqbin.com/echo/post/json"))
 //
 //                    DispatchQueue.global().async {
@@ -74,10 +74,10 @@ class BasicInteractions: QuickSpec {
 }
 
 // MARK: -
-//prefix operator ^
+// prefix operator ^
 
-//import PromiseKit
-//extension PromiseKit.Result {
+// import PromiseKit
+// extension PromiseKit.Result {
 //    static prefix func ^ (lhs: Self) -> Swift.Result<T, Error> {
 //        switch lhs {
 //            case .fulfilled(let value):
@@ -86,4 +86,4 @@ class BasicInteractions: QuickSpec {
 //                return .failure(error)
 //        }
 //    }
-//}
+// }
