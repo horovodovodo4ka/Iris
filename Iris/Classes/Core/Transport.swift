@@ -116,8 +116,6 @@ public final class Transport {
                                   printer: logger,
                                   callSite: callSite)
 
-        var onCancel: OperationCancellation = {}
-
         let barrier = barrier(operation: operation).setFailureType(to: Error.self)
 
         let request = barrier.flatMap {

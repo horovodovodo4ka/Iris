@@ -83,8 +83,8 @@ public extension Middleware {
 
     struct Success {
         private let success: OperationSucces
-        public init(_ recover: @escaping OperationSucces) {
-            self.success = recover
+        public init(_ success: @escaping OperationSucces) {
+            self.success = success
         }
 
         public func callAsFunction(operation: Operation, result: Any?) {

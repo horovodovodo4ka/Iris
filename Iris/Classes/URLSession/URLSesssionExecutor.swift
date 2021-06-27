@@ -30,7 +30,7 @@ public class URLSessionExecutor: Executor {
     public func execute(context: CallContext, data requestData: () throws -> Data?) -> AnyPublisher<OperationResult, Swift.Error> {
         do {
             guard let url = URL(string: context.url) else { throw Error.invalidURL(url: context.url) }
-            var urlRequest = try URLRequest(url: url)
+            var urlRequest = URLRequest(url: url)
             urlRequest.httpMethod = context.method.rawValue
             urlRequest.allHTTPHeaderFields = context.headers
             urlRequest.httpBody = try requestData()
