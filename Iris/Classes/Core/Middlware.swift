@@ -29,7 +29,7 @@ public struct Middleware {
 // MARK: -
 
 public typealias OperationBarrier = (Operation) -> AnyPublisher<Void, Never>
-public typealias OparationHeaders = (Operation) -> Iris.Headers
+public typealias OperationHeaders = (Operation) -> Iris.Headers
 public typealias RawOperationResult = (response: HTTPURLResponse?, headers: Headers, data: Data)
 public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
 public typealias OperationRecover = (Operation, Error) throws -> AnyPublisher<Void, Error>
@@ -49,8 +49,8 @@ public extension Middleware {
     }
 
     struct RequestHeaders {
-        private let headers: OparationHeaders
-        public init(_ headers: @escaping OparationHeaders) {
+        private let headers: OperationHeaders
+        public init(_ headers: @escaping OperationHeaders) {
             self.headers = headers
         }
 
@@ -97,7 +97,7 @@ public prefix func <<< (what: @escaping OperationBarrier) -> Middleware.Barrier 
     Middleware.Barrier(what)
 }
 
-public prefix func <<< (what: @escaping OparationHeaders) -> Middleware.RequestHeaders {
+public prefix func <<< (what: @escaping OperationHeaders) -> Middleware.RequestHeaders {
     Middleware.RequestHeaders(what)
 }
 

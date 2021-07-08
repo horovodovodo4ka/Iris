@@ -156,6 +156,10 @@ public final class Transport {
 
         let recover = error.catch {
             self.recover(operation: operation, error: $0)
+                .tryCatch { e -> AnyPublisher<Void, Error> in
+                    if e is Exception { throw e }
+                    throw Exception(cause: e, context: callSite)
+                }
                 .flatMap {
                     self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
                 }
