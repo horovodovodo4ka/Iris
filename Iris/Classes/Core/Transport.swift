@@ -165,7 +165,7 @@ public final class Transport {
                 }
         }
 
-        return recover.multicast(subject: PassthroughSubject()).eraseToAnyPublisher()
+        return recover.eraseToAnyPublisher()
     }
 
     private func barrier(operation: Operation) -> AnyPublisher<Void, Never> {
