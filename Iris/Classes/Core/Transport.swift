@@ -107,7 +107,11 @@ public final class Transport {
 
         let logger = configuration.printer()
 
-        let uniqueHeaders = Set(middlewares.flatMap { $0.headers }.flatMap { $0(operation: operation).values })
+        let uniqueHeaders = Set(operation.headers.values +
+                                    middlewares.flatMap { $0.headers }
+                                    .flatMap { $0(operation: operation).values }
+                                    .reversed())
+        
         let headers = uniqueHeaders.map { ($0.key.headerName, $0.value) }
 
         let context = CallContext(url: operation.url,
@@ -146,12 +150,12 @@ public final class Transport {
             return result
         }
 
-        let error = success.catch { e -> Fail<MetaResponse<ResponseType>, Exception> in
+        let error = success.mapError { e -> Exception in
             let error = Exception(cause: e, context: callSite)
 
             logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
 
-            return Fail(error: error)
+            return error
         }
 
         let recover = error.catch {
