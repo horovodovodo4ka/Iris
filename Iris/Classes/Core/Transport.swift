@@ -52,7 +52,7 @@ public final class Transport {
 
         execute(operation: operation,
                 data: { nil },
-                response: { try self.decode(operation: operation, data: $0) },
+                response: { try self.decode(operation: operation, model: $0) },
                 callSite: callSite)
     }
 
@@ -72,19 +72,19 @@ public final class Transport {
 
         execute(operation: operation,
                 data: { try self.encode(operation: operation) },
-                response: { try self.decode(operation: operation, data: $0) },
+                response: { try self.decode(operation: operation, model: $0) },
                 callSite: callSite)
     }
 
     // MARK: - private
 
-    private func encode<O: WriteOperation>(operation: O) throws -> Data? {
+    private func encode<O: WriteOperation>(operation: O) throws -> Model {
         let encoder = self.configuration.encoder()
 
         return try encoder.encode(operation.request)
     }
 
-    private func decode<O: ReadOperation>(operation: O, data: Data) throws -> O.ResponseType {
+    private func decode<O: ReadOperation>(operation: O, model: Model) throws -> O.ResponseType {
         let decoder = self.configuration.decoder()
 
         if let traverable = operation as? IndirectResponseOperation {
@@ -92,10 +92,10 @@ public final class Transport {
                 throw TransportError.indirectRequiresTraverser(type(of: operation), type(of: decoder))
             }
 
-            return try traverser.decode(O.ResponseType.self, from: data, at: traverable.responseRelativePath)
+            return try traverser.decode(O.ResponseType.self, from: model, at: traverable.responseRelativePath)
         } else {
 
-            return try decoder.decode(O.ResponseType.self, from: data)
+            return try decoder.decode(O.ResponseType.self, from: model)
         }
     }
 
@@ -107,23 +107,33 @@ public final class Transport {
 
         let logger = configuration.printer()
 
-        let uniqueHeaders = Set(operation.headers.values +
-                                    middlewares.flatMap { $0.headers }
-                                    .flatMap { $0(operation: operation).values }
-                                    .reversed())
-        
-        let headers = uniqueHeaders.map { ($0.key.headerName, $0.value) }
-
-        let context = CallContext(url: operation.url,
-                                  method: operation.method,
-                                  headers: Dictionary(uniqueKeysWithValues: headers),
-                                  printer: logger,
-                                  callSite: callSite)
 
         let barrier = barrier(operation: operation).setFailureType(to: Error.self)
 
-        let request = barrier.flatMap {
-            self.executor.execute(context: context, data: requestData)
+        let request = barrier.flatMap { [middlewares] () -> AnyPublisher<OperationResult, Swift.Error> in
+            do {
+                let content = try requestData()
+                let modelHeaders = content?.meta?.values ?? []
+                let operationHeaders = operation.headers.values
+                let middlewareHeaders = middlewares
+                    .flatMap { $0.headers }
+                    .flatMap { $0(operation: operation).values }
+                    .reversed()
+
+                let uniqueHeaders = Set(modelHeaders + operationHeaders + middlewareHeaders)
+
+                let headers = uniqueHeaders.map { ($0.key.headerName, $0.value) }
+
+                let context = CallContext(url: operation.url,
+                                          method: operation.method,
+                                          headers: Dictionary(uniqueKeysWithValues: headers),
+                                          printer: logger,
+                                          callSite: callSite)
+
+                return self.executor.execute(context: context, data: content?.data)
+            } catch {
+                return Fail(error: error).eraseToAnyPublisher()
+            }
         }
 
         let validate = request
@@ -135,7 +145,7 @@ public final class Transport {
                     try validator(operation: operation, result: rawResult)
                 }
 
-                let ret = try response(result.data)
+                let ret = try response((data: result.data, meta: headers))
 
                 logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
 
@@ -233,19 +243,20 @@ public enum TransportError: Swift.Error, LocalizedError {
     }
 }
 
-typealias EncodingLambda = () throws -> Data?
-typealias DecodingLambda<ResponseType> = (Data) throws -> ResponseType
+public typealias Model = (data: Data, meta: Headers?)
+typealias EncodingLambda = () throws -> Model?
+typealias DecodingLambda<ResponseType> = (Model) throws -> ResponseType
 
 public protocol RequestEncoder {
-    func encode<T>(_ value: T) throws -> Data where T: Encodable
+    func encode<T>(_ value: T) throws -> Model where T: Encodable
 }
 
 public protocol ResponseDecoder {
-    func decode<T>(_ type: T.Type, from data: Data) throws -> T where T: Decodable
+    func decode<T>(_ type: T.Type, from model: Model) throws -> T where T: Decodable
 }
 
 public protocol ResponseTraversalDecoder: ResponseDecoder {
-    func decode<T>(_ type: T.Type, from data: Data, at path: String) throws -> T where T: Decodable
+    func decode<T>(_ type: T.Type, from model: Model, at path: String) throws -> T where T: Decodable
 }
 
 public struct TransportConfig {

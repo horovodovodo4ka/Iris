@@ -17,12 +17,12 @@ public struct AlamofireExecutor: Executor {
         self.logger = printer
     }
 
-    public func execute(context: CallContext, data requestData: () throws -> Data?) -> AnyPublisher<OperationResult, Swift.Error> {
+    public func execute(context: CallContext, data requestData: Data?) -> AnyPublisher<OperationResult, Swift.Error> {
 
         do {
             var urlRequest = try URLRequest(url: context.url, method: context.method.alamofire)
             urlRequest.allHTTPHeaderFields = context.headers
-            urlRequest.httpBody = try requestData()
+            urlRequest.httpBody = requestData
 
             let request = AF.request(urlRequest)
 

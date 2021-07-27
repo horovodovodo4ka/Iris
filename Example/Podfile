@@ -8,7 +8,7 @@ platform :ios, '13.0'
 target 'Iris_Example' do
   pod 'Iris-iOS', :path => '../'
   pod 'Iris-iOS/Defaults', :path => '../'
-  #  pod 'Iris-iOS/Alamofire', :path => '../'
+    pod 'Iris-iOS/Alamofire', :path => '../'
   #  pod 'Iris-iOS/URLSession', :path => '../'
 
   pod 'SwiftLint'

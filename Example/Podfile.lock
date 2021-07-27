@@ -1,15 +1,20 @@
 PODS:
+  - Alamofire (5.4.3)
   - Astaroth (0.5.0)
-  - Iris-iOS (2.0.0):
-    - Iris-iOS/Core (= 2.0.0)
-    - Iris-iOS/URLSession (= 2.0.0)
-  - Iris-iOS/Core (2.0.0)
-  - Iris-iOS/Defaults (2.0.0):
+  - Iris-iOS (2.0.5):
+    - Iris-iOS/Core (= 2.0.5)
+    - Iris-iOS/URLSession (= 2.0.5)
+  - Iris-iOS/Alamofire (2.0.5):
+    - Alamofire (~> 5.1)
     - Iris-iOS/Core
-  - Iris-iOS/Logging (2.0.0):
+    - Iris-iOS/Logging
+  - Iris-iOS/Core (2.0.5)
+  - Iris-iOS/Defaults (2.0.5):
+    - Iris-iOS/Core
+  - Iris-iOS/Logging (2.0.5):
     - Astaroth (~> 0.5)
     - Iris-iOS/Core
-  - Iris-iOS/URLSession (2.0.0):
+  - Iris-iOS/URLSession (2.0.5):
     - Iris-iOS/Core
     - Iris-iOS/Logging
   - Nimble (9.2.0)
@@ -18,6 +23,7 @@ PODS:
 
 DEPENDENCIES:
   - Iris-iOS (from `../`)
+  - Iris-iOS/Alamofire (from `../`)
   - Iris-iOS/Defaults (from `../`)
   - Nimble (from `https://github.com/Quick/Nimble`, branch `main`)
   - Quick
@@ -25,6 +31,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - Alamofire
     - Astaroth
     - Quick
     - SwiftLint
@@ -38,16 +45,17 @@ EXTERNAL SOURCES:
 
 CHECKOUT OPTIONS:
   Nimble:
-    :commit: 92dd63d2dbd9bf5ef733e83febc94f035004573e
+    :commit: be8dfa700e5f34563cd9505e623cd5401c2daff5
     :git: https://github.com/Quick/Nimble
 
 SPEC CHECKSUMS:
+  Alamofire: e447a2774a40c996748296fa2c55112fdbbc42f9
   Astaroth: 5f57410934a28bb7d25350a4366680af13737d3d
-  Iris-iOS: 2c3ea07a6ae321c3eb69c60aa0b1c885a03fa076
+  Iris-iOS: 444d0689d21209d4c3f2d982c8c99dd6c48409d0
   Nimble: 4f4a345c80b503b3ea13606a4f98405974ee4d0b
   Quick: 6473349e43b9271a8d43839d9ba1c442ed1b7ac4
   SwiftLint: 99f82d07b837b942dd563c668de129a03fc3fb52
 
-PODFILE CHECKSUM: d4a18053a4e5825bcf278f0b139189ec6a10edc0
+PODFILE CHECKSUM: 5aa57371943be4259f3ddf72a704242319fa77e9
 
 COCOAPODS: 1.10.1
