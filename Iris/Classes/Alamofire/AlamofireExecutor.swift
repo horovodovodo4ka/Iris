@@ -31,7 +31,7 @@ public struct AlamofireExecutor: Executor {
             //
 
             return request
-                .publishData()
+                .publishData(emptyResponseCodes: Set(201..<300))
                 .handleEvents(receiveOutput: {
                     // logging
                     let responseInfo = ExecutorPrinterResponseInfo(
