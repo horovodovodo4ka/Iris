@@ -27,17 +27,23 @@ public struct File: Encodable {
     public let mimeType: String
 }
 
-
+public enum MultipartCollectionStrategy {
+    case asIs
+    case flat(keyJoin: String)
+}
 public final class MultipartEncoder: RequestEncoder {
-    private let multipart: () -> MultipartFormData
 
-    public init(multipartData: @escaping @autoclosure () -> MultipartFormData) {
+    private let multipart: () -> MultipartFormData
+    private let collectionsStrategy: MultipartCollectionStrategy
+
+    public init(collectionsStrategy: MultipartCollectionStrategy = .asIs, multipartData: @escaping @autoclosure () -> MultipartFormData) {
         multipart = multipartData
+        self.collectionsStrategy = collectionsStrategy
     }
 
     public func encode<T>(_ value: T) throws -> Model where T : Encodable {
         let mp = multipart()
-        try value.encode(to: MPEncoding(to: .init(mp)))
+        try value.encode(to: MPEncoding(to: .init(mp, collectionsStrategy: collectionsStrategy)))
         return (data: try mp.encode(),
                 meta: Headers(raw:[
                     "Content-Type": mp.contentType,
@@ -48,8 +54,11 @@ public final class MultipartEncoder: RequestEncoder {
 }
 
 private final class Mediator {
-    init(_ mp: MultipartFormData) {
+    fileprivate let collectionsStrategy: MultipartCollectionStrategy
+
+    init(_ mp: MultipartFormData, collectionsStrategy: MultipartCollectionStrategy) {
         self.mp = mp
+        self.collectionsStrategy = collectionsStrategy
     }
 
     let mp: MultipartFormData
@@ -63,14 +72,20 @@ private final class Mediator {
     }
 
     private func stringKey(from codingKey: [CodingKey]) -> String {
-        var reversed = Array(codingKey.reversed())
-            .map { $0.stringValue }
-            .map { $0.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0 }
+        if case .flat(keyJoin: let glue) = collectionsStrategy {
+            var keys = Array(codingKey)
+                .filter { $0.intValue == nil }
+                .map { $0.stringValue }
 
-        let firstToken = reversed.popLast()
-        let subkeys = Array(reversed.reversed()).map { "[\($0)]"}
+            return keys.compactMap { $0 }.joined(separator: glue)
+        } else {
+            var reversed = Array(codingKey.reversed())
+                .map { $0.stringValue }
 
-        return ([firstToken] + subkeys).compactMap { $0 }.joined()
+            let firstToken = reversed.popLast()
+            let subkeys = Array(reversed.reversed()).map { "[\($0)]"}
+            return ([firstToken] + subkeys).compactMap { $0 }.joined()
+        }
     }
 }
 
