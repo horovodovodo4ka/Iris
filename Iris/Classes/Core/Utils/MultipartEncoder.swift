@@ -73,7 +73,7 @@ private final class Mediator {
 
     private func stringKey(from codingKey: [CodingKey]) -> String {
         if case .flat(keyJoin: let glue) = collectionsStrategy {
-            var keys = Array(codingKey)
+            let keys = Array(codingKey)
                 .filter { $0.intValue == nil }
                 .map { $0.stringValue }
 
