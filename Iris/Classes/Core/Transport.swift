@@ -52,7 +52,7 @@ public final class Transport {
 
         execute(operation: operation,
                 data: { nil },
-                response: { try self.decode(operation: operation, model: $0) },
+                response: { [unowned self] in try self.decode(operation: operation, model: $0) },
                 callSite: callSite)
     }
 
@@ -61,7 +61,7 @@ public final class Transport {
     where O: WriteOperation, O.RequestType == RequestType {
 
         execute(operation: operation,
-                data: { try self.encode(operation: operation) },
+                data: { [unowned self] in try self.encode(operation: operation) },
                 response: { _ in () },
                 callSite: callSite)
     }
@@ -71,8 +71,8 @@ public final class Transport {
     where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
 
         execute(operation: operation,
-                data: { try self.encode(operation: operation) },
-                response: { try self.decode(operation: operation, model: $0) },
+                data: { [unowned self] in try self.encode(operation: operation) },
+                response: { [unowned self] in try self.decode(operation: operation, model: $0) },
                 callSite: callSite)
     }
 
@@ -107,10 +107,9 @@ public final class Transport {
 
         let logger = configuration.printer()
 
-
         let barrier = barrier(operation: operation).setFailureType(to: Error.self)
 
-        let request = barrier.flatMap { [middlewares] () -> AnyPublisher<OperationResult, Swift.Error> in
+        let request = barrier.flatMap { [executor, middlewares, logger] () -> AnyPublisher<OperationResult, Swift.Error> in
             do {
                 let content = try requestData()
                 let modelHeaders = content?.meta?.values ?? []
@@ -130,18 +129,18 @@ public final class Transport {
                                           printer: logger,
                                           callSite: callSite)
 
-                return self.executor.execute(context: context, data: content?.data)
+                return executor.execute(context: context, data: content?.data)
             } catch {
                 return Fail(error: error).eraseToAnyPublisher()
             }
         }
 
         let validate = request
-            .tryMap { result -> MetaResponse<ResponseType> in
+            .tryMap { [logger, middlewares] result -> MetaResponse<ResponseType> in
                 let headers = Headers(raw: result.response?.allHeaderFields ?? [:])
                 let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
 
-                for validator in self.middlewares.flatMap({ $0.validate }) {
+                for validator in middlewares.flatMap({ $0.validate }) {
                     try validator(operation: operation, result: rawResult)
                 }
 
@@ -155,12 +154,12 @@ public final class Transport {
                 )
             }
 
-        let success = validate.map { result -> MetaResponse<ResponseType> in
-            self.middlewares.flatMap { $0.success }.forEach { $0(operation: operation, result: result.model) }
+        let success = validate.map { [middlewares] result -> MetaResponse<ResponseType> in
+            middlewares.flatMap { $0.success }.forEach { $0(operation: operation, result: result.model) }
             return result
         }
 
-        let error = success.mapError { e -> Exception in
+        let error = success.mapError { [logger] e -> Exception in
             let error = Exception(cause: e, context: callSite)
 
             logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
@@ -277,16 +276,4 @@ public struct TransportConfig {
 public struct MetaResponse<Response> {
     public let model: Response
     public let headers: Headers
-}
-
-extension Future where Failure == Error {
-    public convenience init(_ attemptToFulfill: @escaping (@escaping Future<Output, Failure>.Promise) throws -> Void) {
-        self.init { complete in
-            do {
-                try attemptToFulfill(complete)
-            } catch {
-                complete(.failure(error))
-            }
-        }
-    }
 }

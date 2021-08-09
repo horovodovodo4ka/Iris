@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-public class URLSessionExecutor: Executor {
+public struct URLSessionExecutor: Executor {
 
     public enum Error: LocalizedError {
         case invalidURL(url: String)

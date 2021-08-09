@@ -15,7 +15,7 @@ public struct CallContext {
     let url: String
     let method: OperationMethod
     let headers: [String: String]
-    let printer: Printer
+    unowned let printer: Printer
     let callSite: StackTraceElement
 }
 
