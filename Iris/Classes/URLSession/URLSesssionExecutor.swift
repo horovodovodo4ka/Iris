@@ -22,9 +22,11 @@ public struct URLSessionExecutor: Executor {
     }
 
     private let logger: ExecutorPrinter
+    private let session: URLSession
 
-    public init(printer: ExecutorPrinter = DefaultExecutorPrinter()) {
+    public init(printer: ExecutorPrinter = DefaultExecutorPrinter(), session: URLSession = .shared) {
         self.logger = printer
+        self.session = session
     }
 
     public func execute(context: CallContext, data requestData: Data?) -> AnyPublisher<OperationResult, Swift.Error> {
@@ -35,7 +37,7 @@ public struct URLSessionExecutor: Executor {
             urlRequest.allHTTPHeaderFields = context.headers
             urlRequest.httpBody = requestData
 
-            let request = URLSession.shared.dataTaskPublisher(for: urlRequest)
+            let request = session.dataTaskPublisher(for: urlRequest)
 
             // logging
             logger.logRequest(request: urlRequest, context: context)

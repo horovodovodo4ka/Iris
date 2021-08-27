@@ -12,9 +12,11 @@ import Combine
 public struct AlamofireExecutor: Executor {
 
     private let logger: ExecutorPrinter
+    private let session: Alamofire.Session
 
-    public init(printer: ExecutorPrinter = DefaultExecutorPrinter()) {
+    public init(printer: ExecutorPrinter = DefaultExecutorPrinter(), session: Alamofire.Session = .default) {
         self.logger = printer
+        self.session = session
     }
 
     public func execute(context: CallContext, data requestData: Data?) -> AnyPublisher<OperationResult, Swift.Error> {
@@ -24,14 +26,14 @@ public struct AlamofireExecutor: Executor {
             urlRequest.allHTTPHeaderFields = context.headers
             urlRequest.httpBody = requestData
 
-            let request = AF.request(urlRequest)
+            let request = session.request(urlRequest)
 
             // logging
             logger.logRequest(request: urlRequest, context: context)
             //
 
             return request
-                .publishData(emptyResponseCodes: Set(201..<300))
+                .publishData(emptyResponseCodes: Set(200..<300)) // support empty responses via decoder
                 .handleEvents(receiveOutput: {
                     // logging
                     let responseInfo = ExecutorPrinterResponseInfo(
