@@ -37,7 +37,9 @@ public struct URLSessionExecutor: Executor {
             urlRequest.allHTTPHeaderFields = context.headers
             urlRequest.httpBody = requestData
 
-            let request = session.dataTaskPublisher(for: urlRequest)
+            let request = session
+                .dataTaskPublisher(for: urlRequest)
+                .receive(on: DispatchQueue.global())
 
             // logging
             logger.logRequest(request: urlRequest, context: context)

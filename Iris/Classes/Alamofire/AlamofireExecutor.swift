@@ -34,6 +34,7 @@ public struct AlamofireExecutor: Executor {
 
             return request
                 .publishData(emptyResponseCodes: Set(200..<300)) // support empty responses via decoder
+                .receive(on: DispatchQueue.global())
                 .handleEvents(receiveOutput: {
                     // logging
                     let responseInfo = ExecutorPrinterResponseInfo(
