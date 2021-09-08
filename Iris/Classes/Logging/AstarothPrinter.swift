@@ -18,16 +18,17 @@ public class AstarothPrinter: Printer {
         self.stringLimit = stringLimit
     }
 
-    private var requestString: CustomStringConvertible = ""
-    private var responseString: CustomStringConvertible = ""
+    private var requestString: String = ""
+    private var responseString: String = ""
 
     public func print(_ string: String, phase: Phase, callSite: StackTraceElement) {
         switch phase {
             case .request:
-                requestString = string.prefix(stringLimit)
-                Log.d(Network, self.requestString, callSite.astaroth)
+                let string = String(string.prefix(stringLimit))
+                requestString = string
+                Log.d(Network, string, callSite.astaroth)
             case .response(_):
-                responseString = string.prefix(stringLimit)
+                responseString = String(string.prefix(stringLimit))
             case .decoding(let success):
                 let string = "\(requestString)\n\(responseString)\n\(string)"
                 if success {
