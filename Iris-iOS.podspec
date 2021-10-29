@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Iris-iOS'
-  s.version          = '2.3.2'
+  s.version          = '2.3.3'
   s.summary          = 'Protocol based network abstraction layer'
   s.description      = <<-DESC
     Protocol based network abstraction layer.

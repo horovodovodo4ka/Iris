@@ -39,7 +39,6 @@ public struct URLSessionExecutor: Executor {
 
             let request = session
                 .dataTaskPublisher(for: urlRequest)
-                .receive(on: DispatchQueue.global())
 
             // logging
             logger.logRequest(request: urlRequest, context: context)
