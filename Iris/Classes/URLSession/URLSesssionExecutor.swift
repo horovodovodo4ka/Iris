@@ -36,6 +36,9 @@ public struct URLSessionExecutor: Executor {
             urlRequest.httpMethod = context.method.rawValue
             urlRequest.allHTTPHeaderFields = context.headers
             urlRequest.httpBody = requestData
+            if let timeout = context.timeout {
+                urlRequest.timeoutInterval = timeout
+            }
 
             let request = session
                 .dataTaskPublisher(for: urlRequest)

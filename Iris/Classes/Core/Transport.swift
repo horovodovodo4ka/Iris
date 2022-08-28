@@ -126,6 +126,7 @@ public final class Transport {
                 let context = CallContext(url: operation.url,
                                           method: operation.method,
                                           headers: Dictionary(uniqueKeysWithValues: headers),
+                                          timeout: operation.timeout,
                                           printer: logger,
                                           callSite: callSite)
 

@@ -25,6 +25,9 @@ public struct AlamofireExecutor: Executor {
             var urlRequest = try URLRequest(url: context.url, method: context.method.alamofire)
             urlRequest.allHTTPHeaderFields = context.headers
             urlRequest.httpBody = requestData
+            if let timeout = context.timeout {
+                urlRequest.timeoutInterval = timeout
+            }
 
             let request = session.request(urlRequest)
 

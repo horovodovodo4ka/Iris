@@ -9,6 +9,11 @@ import Foundation
 
 public protocol Operation {
     var url: String { get }
+    var timeout: TimeInterval? { get }
+}
+
+public extension Operation {
+    var timeout: TimeInterval? { nil }
 }
 
 public protocol HTTPOperation: Operation {
@@ -21,7 +26,6 @@ public protocol HTTPOperation: Operation {
 
 public protocol ReadOperation: HTTPOperation {
     associatedtype ResponseType: Decodable
-
 }
 
 public protocol WriteOperation: HTTPOperation {
