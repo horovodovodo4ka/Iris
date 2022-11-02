@@ -19,46 +19,47 @@ public struct AlamofireExecutor: Executor {
         self.session = session
     }
 
-    public func execute(context: CallContext, data requestData: Data?) -> AnyPublisher<OperationResult, Swift.Error> {
+    public func execute(context: CallContext, data requestData: Data?) async throws -> OperationResult {
+
+        var urlRequest = try URLRequest(url: context.url, method: context.method.alamofire)
+        urlRequest.allHTTPHeaderFields = context.headers
+        urlRequest.httpBody = requestData
+        if let timeout = context.timeout {
+            urlRequest.timeoutInterval = timeout
+        }
+
+        let request = session.request(urlRequest)
+
+        // logging
+        logger.logRequest(request: urlRequest, context: context)
+        //
 
         do {
-            var urlRequest = try URLRequest(url: context.url, method: context.method.alamofire)
-            urlRequest.allHTTPHeaderFields = context.headers
-            urlRequest.httpBody = requestData
-            if let timeout = context.timeout {
-                urlRequest.timeoutInterval = timeout
-            }
+            return try await withCheckedThrowingContinuation { [logger] cont in
+                request
+                    .responseData(emptyResponseCodes: Set(200..<300)) {
+                        let responseInfo = ExecutorPrinterResponseInfo(
+                            httpResponse: $0.response,
+                            data: $0.data,
+                            elapsedTime: request.metrics?.taskInterval.duration ?? 0.0,
+                            error: $0.error
+                        )
 
-            let request = session.request(urlRequest)
+                        logger.logResponse(request: $0.request, response: responseInfo, context: context)
 
-            // logging
-            logger.logRequest(request: urlRequest, context: context)
-            //
-
-            return request
-                .publishData(emptyResponseCodes: Set(200..<300)) // support empty responses via decoder
-                .handleEvents(receiveOutput: {
-                    // logging
-                    let responseInfo = ExecutorPrinterResponseInfo(
-                        httpResponse: $0.response,
-                        data: $0.data,
-                        elapsedTime: request.metrics?.taskInterval.duration ?? 0.0,
-                        error: $0.error
-                    )
-
-                    self.logger.logResponse(request: $0.request, response: responseInfo, context: context)
-                })
-                .tryMap {
-                    switch $0.result {
+                        switch $0.result {
                         case .success(let data):
-                            return ($0.response, data)
+                            cont.resume(returning: ($0.response, data))
                         case .failure(let error):
-                            throw error as Error
+                            cont.resume(throwing: error)
+                        }
                     }
-                }
-                .eraseToAnyPublisher()
+            }
         } catch {
-            return Fail(error: error).eraseToAnyPublisher()
+            if error is CancellationError {
+                request.cancel()
+            }
+            throw error
         }
     }
 }

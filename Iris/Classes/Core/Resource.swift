@@ -39,8 +39,8 @@ public protocol Readable: Resource {
 }
 
 public extension Readable {
-    func read(entityWithId id: ResourceId<ModelId> = .this, _ callSite: StackTraceElement = .context()) -> AnyPublisher<ModelType, Error> {
-        transport.execute(readOperation(id), from: callSite)
+    func read(entityWithId id: ResourceId<ModelId> = .this, _ callSite: StackTraceElement = .context()) async throws -> ModelType {
+        try await transport.execute(readOperation(id), from: callSite)
     }
 }
 
@@ -56,8 +56,8 @@ public protocol Listable: Resource {
 }
 
 public extension Listable {
-    func list(_ callSite: StackTraceElement = .context()) -> AnyPublisher<[ModelType], Error> {
-        transport.execute(listOperation(), from: callSite)
+    func list(_ callSite: StackTraceElement = .context()) async throws -> [ModelType] {
+        try await transport.execute(listOperation(), from: callSite)
     }
 }
 
@@ -75,8 +75,8 @@ public protocol Creatable: Resource {
 }
 
 public extension Creatable {
-    func create(entity model: NewModelType, _ callSite: StackTraceElement = .context()) -> AnyPublisher<ModelType, Error> {
-        transport.execute(createOperation(model), from: callSite)
+    func create(entity model: NewModelType, _ callSite: StackTraceElement = .context()) async throws -> ModelType {
+        try await transport.execute(createOperation(model), from: callSite)
     }
 }
 
@@ -93,8 +93,8 @@ public protocol Updateable: Resource {
 }
 
 public extension Updateable {
-    func update(entity model: ModelType, _ callSite: StackTraceElement = .context()) -> AnyPublisher<ModelType, Error> {
-        transport.execute(updateOperation(model: model), from: callSite)
+    func update(entity model: ModelType, _ callSite: StackTraceElement = .context()) async throws -> ModelType {
+        try await transport.execute(updateOperation(model: model), from: callSite)
     }
 }
 
@@ -116,7 +116,7 @@ public protocol Deletable: Resource {
 }
 
 public extension Deletable {
-    func delete(entity: DeleteId<ModelType, ModelId>, _ callSite: StackTraceElement = .context()) -> AnyPublisher<Void, Error> {
-        transport.execute(deleteOperation(entity), from: callSite)
+    func delete(entity: DeleteId<ModelType, ModelId>, _ callSite: StackTraceElement = .context()) async throws {
+        try await transport.execute(deleteOperation(entity), from: callSite)
     }
 }

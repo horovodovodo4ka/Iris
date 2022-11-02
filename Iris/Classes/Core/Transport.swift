@@ -27,50 +27,50 @@ public final class Transport {
     // MARK: - designated execution, only models
     
     @discardableResult
-    public func execute<ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> AnyPublisher<ResponseType, Error>
+    public func execute<ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) async throws -> ResponseType
     where O: ReadOperation, O.ResponseType == ResponseType {
-        executeWithMeta(operation, from: callSite).map { $0.model }.eraseToAnyPublisher()
+        try await executeWithMeta(operation, from: callSite).model
     }
 
     @discardableResult
-    public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> AnyPublisher<Void, Error>
+    public func execute<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) async throws
     where O: WriteOperation, O.RequestType == RequestType {
-        executeWithMeta(operation, from: callSite).map { ($0.model) }.eraseToAnyPublisher()
+        try await executeWithMeta(operation, from: callSite)
     }
 
     @discardableResult
-    public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> AnyPublisher<ResponseType, Error>
+    public func execute<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) async throws -> ResponseType
     where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
-        executeWithMeta(operation, from: callSite).map { $0.model }.eraseToAnyPublisher()
+        try await executeWithMeta(operation, from: callSite).model
     }
 
     // MARK: - extended execution with headers
 
     @discardableResult
-    public func executeWithMeta<ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> AnyPublisher<MetaResponse<ResponseType>, Error>
+    public func executeWithMeta<ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) async throws -> MetaResponse<ResponseType>
     where O: ReadOperation, O.ResponseType == ResponseType {
 
-        execute(operation: operation,
+        try await execute(operation: operation,
                 data: { nil },
                 response: { [unowned self] in try self.decode(operation: operation, model: $0) },
                 callSite: callSite)
     }
 
     @discardableResult
-    public func executeWithMeta<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> AnyPublisher<MetaResponse<Void>, Error>
+    public func executeWithMeta<RequestType, O>(_ operation: O, from callSite: StackTraceElement = .context()) async throws -> MetaResponse<Void>
     where O: WriteOperation, O.RequestType == RequestType {
 
-        execute(operation: operation,
+        try await execute(operation: operation,
                 data: { [unowned self] in try self.encode(operation: operation) },
                 response: { _ in () },
                 callSite: callSite)
     }
 
     @discardableResult
-    public func executeWithMeta<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) -> AnyPublisher<MetaResponse<ResponseType>, Error>
+    public func executeWithMeta<RequestType, ResponseType, O>(_ operation: O, from callSite: StackTraceElement = .context()) async throws -> MetaResponse<ResponseType>
     where O: ReadOperation & WriteOperation, O.RequestType == RequestType, O.ResponseType == ResponseType {
 
-        execute(operation: operation,
+        try await execute(operation: operation,
                 data: { [unowned self] in try self.encode(operation: operation) },
                 response: { [unowned self] in try self.decode(operation: operation, model: $0) },
                 callSite: callSite)
@@ -103,130 +103,97 @@ public final class Transport {
         operation: O,
         data requestData: @escaping EncodingLambda,
         response: @escaping DecodingLambda<ResponseType>,
-        callSite: StackTraceElement) -> AnyPublisher<MetaResponse<ResponseType>, Error> {
+        callSite: StackTraceElement) async throws -> MetaResponse<ResponseType> {
 
-        let logger = configuration.printer()
+            let logger = configuration.printer()
 
-        let barrier = barrier(operation: operation).setFailureType(to: Error.self)
-
-        let request = barrier.flatMap { [executor, middlewares, logger] () -> AnyPublisher<OperationResult, Swift.Error> in
             do {
-                let content = try requestData()
-                let modelHeaders = content?.meta?.values ?? []
-                let operationHeaders = operation.headers.values
-                let middlewareHeaders = middlewares
-                    .flatMap { $0.headers }
-                    .flatMap { $0(operation: operation).values }
-                    .reversed()
+                try await barrier(operation: operation)
 
-                let uniqueHeaders = Set(modelHeaders + operationHeaders + middlewareHeaders)
+                let rawResult = try await runRequest(operation: operation,
+                                                     logger: logger,
+                                                     callSite: callSite,
+                                                     requestData)
 
-                let headers = uniqueHeaders.map { ($0.key.headerName, $0.value) }
+                try validator(operation: operation, result: rawResult)
 
-                let context = CallContext(url: operation.url,
-                                          method: operation.method,
-                                          headers: Dictionary(uniqueKeysWithValues: headers),
-                                          timeout: operation.timeout,
-                                          printer: logger,
-                                          callSite: callSite)
-
-                return executor.execute(context: context, data: content?.data)
-            } catch {
-                return Fail(error: error).eraseToAnyPublisher()
-            }
-        }
-
-        let validate = request
-            .tryMap { [logger, middlewares] result -> MetaResponse<ResponseType> in
-                let headers = Headers(raw: result.response?.allHeaderFields ?? [:])
-                let rawResult = RawOperationResult(response: result.response, headers: headers, data: result.data)
-
-                for validator in middlewares.flatMap({ $0.validate }) {
-                    try validator(operation: operation, result: rawResult)
-                }
-
-                let ret = try response((data: result.data, meta: headers))
+                let ret = try response((data: rawResult.data, meta: rawResult.headers))
 
                 logger.print("Sucсeed!", phase: .decoding(success: true), callSite: callSite)
 
-                return MetaResponse(
-                    model: ret,
-                    headers: headers
-                )
+                return MetaResponse(model: ret, headers: rawResult.headers)
+
+            } catch {
+                let error = Exception(cause: error, context: callSite)
+
+                logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
+
+                do {
+                    try await recover(operation: operation, error: error)
+                    return try await execute(operation: operation, data: requestData, response: response, callSite: callSite)
+                } catch {
+                    if error is Exception { throw error }
+                    throw Exception(cause: error, context: callSite)
+                }
             }
-
-        let success = validate.map { [middlewares] result -> MetaResponse<ResponseType> in
-            middlewares.flatMap { $0.success }.forEach { $0(operation: operation, result: result.model) }
-            return result
-        }
-
-        let error = success.mapError { [logger] e -> Exception in
-            let error = Exception(cause: e, context: callSite)
-
-            logger.print("[Error] " + error.localizedDescription, phase: .decoding(success: false), callSite: callSite)
-
-            return error
-        }
-
-        let recover = error.catch {
-            self.recover(operation: operation, error: $0)
-                .tryCatch { e -> AnyPublisher<Void, Error> in
-                    if e is Exception { throw e }
-                    throw Exception(cause: e, context: callSite)
-                }
-                .flatMap {
-                    self.execute(operation: operation, data: requestData, response: response, callSite: callSite)
-                }
-        }
-
-        return recover.eraseToAnyPublisher()
     }
 
-    private func barrier(operation: Operation) -> AnyPublisher<Void, Never> {
-        guard middlewares.count > 0 else {
-            return Just(()).eraseToAnyPublisher()
-        }
+    private func runRequest<O: HTTPOperation>(operation: O,
+                                               logger: Printer,
+                                               callSite: StackTraceElement,
+                                               _ requestData: EncodingLambda) async throws -> RawOperationResult {
+        let content = try requestData()
+        let modelHeaders = content?.meta?.values ?? []
+        let operationHeaders = operation.headers.values
+        let middlewareHeaders = middlewares
+            .flatMap { $0.headers }
+            .flatMap { $0(operation: operation).values }
+            .reversed()
 
-        var it = middlewares.flatMap { $0.barrier }.lazy.makeIterator()
+        let uniqueHeaders = Set(modelHeaders + operationHeaders + middlewareHeaders)
 
-        func next() -> AnyPublisher<Void, Never> {
-            guard let nextBarrierBlock = it.next() else {
-                return Just(()).eraseToAnyPublisher()
-            }
+        let headers = uniqueHeaders.map { ($0.key.headerName, $0.value) }
 
-            return nextBarrierBlock(operation: operation).flatMap { next() }.eraseToAnyPublisher()
-        }
+        let context = CallContext(url: operation.url,
+                                  method: operation.method,
+                                  headers: Dictionary(uniqueKeysWithValues: headers),
+                                  timeout: operation.timeout,
+                                  printer: logger,
+                                  callSite: callSite)
 
-        return next()
+        let operationResult = try await executor.execute(context: context, data: content?.data)
+
+        let responseHeaders = Headers(raw: operationResult.response?.allHeaderFields ?? [:])
+        let rawResult = RawOperationResult(response: operationResult.response,
+                                           headers: responseHeaders,
+                                           data: operationResult.data)
+
+        return rawResult
     }
 
-    private func recover(operation: Operation, error: Exception) -> AnyPublisher<Void, Error> {
+    private func barrier(operation: Operation) async {
+        for barrier in middlewares.flatMap { $0.barrier } {
+            await barrier(operation: operation)
+        }
+    }
+
+    private func recover(operation: Operation, error: Exception) async throws {
         let cause = error.cause ?? error
 
-        guard middlewares.count > 0 else {
-            return Fail(error: cause).eraseToAnyPublisher()
-        }
-
-        var it = middlewares.flatMap { $0.recover }.lazy.makeIterator()
-
-        func next() -> AnyPublisher<Void, Error> {
-            guard let nextBarrierBlock = it.next() else {
-                return Fail(error: cause).eraseToAnyPublisher()
-            }
-
-            let block: AnyPublisher<Void, Error>
+        for recover in middlewares.flatMap { $0.recover } {
             do {
-                block = try nextBarrierBlock(operation: operation, error: cause)
-            } catch {
-                block = Fail(error: cause).eraseToAnyPublisher()
-            }
-
-            return block
-                .catch { _ in next() }
-                .eraseToAnyPublisher()
+                try await recover(operation: operation, error: cause)
+                return
+            } catch { }
         }
 
-        return next()
+        throw cause
+    }
+
+    private func validator<O: HTTPOperation>(operation: O, result rawResult: RawOperationResult) throws {
+        for validator in middlewares.flatMap({ $0.validate }) {
+            try validator(operation: operation, result: rawResult)
+        }
     }
 }
 

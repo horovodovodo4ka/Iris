@@ -21,5 +21,5 @@ public struct CallContext {
 }
 
 public protocol Executor {
-    func execute(context: CallContext, data requestData: Data?) -> AnyPublisher<OperationResult, Swift.Error>
+    func execute(context: CallContext, data requestData: Data?) async throws -> OperationResult
 }

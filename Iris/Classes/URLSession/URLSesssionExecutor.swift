@@ -29,71 +29,47 @@ public struct URLSessionExecutor: Executor {
         self.session = session
     }
 
-    public func execute(context: CallContext, data requestData: Data?) -> AnyPublisher<OperationResult, Swift.Error> {
+    public func execute(context: CallContext, data requestData: Data?) async throws -> OperationResult {
+
+        guard let url = URL(string: context.url) else { throw Error.invalidURL(url: context.url) }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = context.method.rawValue
+        urlRequest.allHTTPHeaderFields = context.headers
+        urlRequest.httpBody = requestData
+        if let timeout = context.timeout {
+            urlRequest.timeoutInterval = timeout
+        }
+
+        // logging
+        logger.logRequest(request: urlRequest, context: context)
+        //
+
+        let start = DispatchTime.now()
+
         do {
-            guard let url = URL(string: context.url) else { throw Error.invalidURL(url: context.url) }
-            var urlRequest = URLRequest(url: url)
-            urlRequest.httpMethod = context.method.rawValue
-            urlRequest.allHTTPHeaderFields = context.headers
-            urlRequest.httpBody = requestData
-            if let timeout = context.timeout {
-                urlRequest.timeoutInterval = timeout
-            }
+            let (data, response) = try await session.data(for: urlRequest)
 
-            let request = session
-                .dataTaskPublisher(for: urlRequest)
+            let responseInfo = ExecutorPrinterResponseInfo(
+                httpResponse: response as? HTTPURLResponse,
+                data: data,
+                elapsedTime: start.measure(),
+                error: nil
+            )
 
-            // logging
-            logger.logRequest(request: urlRequest, context: context)
-            //
+            logger.logResponse(request: urlRequest, response: responseInfo, context: context)
 
-            let start = DispatchTime.now()
-
-            struct Response {
-                let request: URLRequest
-                let response: HTTPURLResponse?
-                let data: Data?
-                let error: Swift.Error?
-                let duration: TimeInterval
-
-                var result: Swift.Result<Data, Swift.Error> {
-                    if let data = data {
-                        return .success(data)
-                    } else {
-                        return .failure(error!)
-                    }
-                }
-            }
-
-            return request
-                .map {
-                    Response(request: urlRequest, response: $0.response as? HTTPURLResponse, data: $0.data, error: nil, duration: start.measure())
-                }
-                .catch {
-                    Just(Response(request: urlRequest, response: nil, data: nil, error: $0, duration: start.measure()))
-                }
-                .handleEvents(receiveOutput: {
-                    // logging
-                    let responseInfo = ExecutorPrinterResponseInfo(
-                        httpResponse: $0.response,
-                        data: $0.data,
-                        elapsedTime: $0.duration,
-                        error: $0.error
-                    )
-
-                    self.logger.logResponse(request: $0.request, response: responseInfo, context: context)
-                })
-                .tryMap {
-                    switch $0.result {
-                        case .success(let data):
-                            return ($0.response, data)
-                        case .failure(let error):
-                            throw error as Swift.Error
-                    }
-                }
-                .eraseToAnyPublisher()
+            return (response as? HTTPURLResponse, data)
         } catch {
-            return Fail(error: error).eraseToAnyPublisher()
+            let responseInfo = ExecutorPrinterResponseInfo(
+                httpResponse: nil,
+                data: nil,
+                elapsedTime: start.measure(),
+                error: error
+            )
+
+            logger.logResponse(request: urlRequest, response: responseInfo, context: context)
+
+            throw error
         }
     }
 }

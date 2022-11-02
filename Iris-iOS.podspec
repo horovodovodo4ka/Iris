@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Iris-iOS'
-  s.version          = '2.4.0'
+  s.version          = '3.0.0'
   s.summary          = 'Protocol based network abstraction layer'
   s.description      = <<-DESC
     Protocol based network abstraction layer.
@@ -33,7 +33,7 @@ Pod::Spec.new do |s|
       sp.dependency 'Iris-iOS/Core'
       sp.dependency 'Iris-iOS/Logging'
 
-      sp.dependency 'Alamofire', '~> 5.1'
+      sp.dependency 'Alamofire', '~> 5.6'
   end
 
   s.subspec 'URLSession' do |sp|

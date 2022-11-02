@@ -11,7 +11,7 @@ import Iris
 import Combine
 
 class ViewController: UIViewController {
-    private var scope = [AnyCancellable]()
+    private var task: Task<Void, Never>?
 
     let transport = Transport(
         configuration: .default,
@@ -30,33 +30,28 @@ class ViewController: UIViewController {
     }
 
     @IBAction func start() {
-
-//        let op = TestResource(transport: transport).create(entity: TestOperation.Request())
-
-        let op = transport.execute(TestOperation())
-
-        op.receive(on: DispatchQueue.main)
-            .sink {
-                if case .failure(let error) = $0 {
-                    print(error)
-                }
-                self.cancel()
-            } receiveValue: {
-                print($0)
+        task = Task {
+            do {
+                //            let result = TestResource(transport: transport).create(entity: TestOperation.Request())
+                let result = try await transport.execute(TestOperation())
+                print(result)
+            } catch {
+                print(error)
             }
-            .store(in: &scope)
+            task = nil
+        }
 
         redraw()
     }
 
     @IBAction func cancel() {
-        scope = []
+        task?.cancel()
         redraw()
     }
 
     private func redraw() {
-        self.cancelButton.isEnabled = !scope.isEmpty
-        self.startButton.isEnabled = scope.isEmpty
+        self.cancelButton.isEnabled = task != nil
+        self.startButton.isEnabled = task == nil
     }
 }
 
@@ -74,10 +69,11 @@ extension TransportConfig {
 extension Middleware {
     static let test = Middleware(
         barrier:
-                <<<{ _ in delay(.seconds(1)) },
+                <<<{ _ in try? await delay(.seconds(1)) },
         headers:
                 <<<{ _ in Headers(.authorization(.basic(login: "John", password: "Doe"))) },
-                .auth(yes: true),
+                .auth(yes: false),
+                <<<{ _ in Headers([.init(key: .contentType, value: "application/json")]) },
         validate:
                 .statusCode,
         recover:
@@ -91,7 +87,7 @@ extension Middleware {
 
 extension Middleware.Recover {
     static func retryAfter(interval: DispatchTimeInterval) -> Self {
-        Self { _, _ in delay(interval) }
+        Self { _, _ in try await delay(interval) }
     }
 }
 
@@ -189,25 +185,54 @@ extension Header {
     }
 }
 
-struct Delay: Publisher {
-    typealias Output = Void
-    typealias Failure = Never
+func delay(_ delayInterval: DispatchTimeInterval) async throws {
+    try await Task.sleep(delayInterval)
+}
 
-    private let future: Future<Output, Failure>
-
-    init(_ delayInterval: DispatchTimeInterval) {
-        future = Future { complete in
-            DispatchQueue.global().asyncAfter(deadline: .now() + delayInterval) {
-                complete(.success(()))
-            }
-        }
+extension Task where Success == Never, Failure == Never {
+    static func sleep(_ time: DispatchTimeInterval) async throws {
+        try await sleep(nanoseconds: time.nanoseconds)
     }
 
-    func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
-        future.receive(subscriber: subscriber)
+    static func sleep(_ time: TimeInterval) async throws {
+        try await sleep(nanoseconds: UInt64(time * 1_000_000_000))
     }
 }
 
-func delay<Failure>(_ delayInterval: DispatchTimeInterval) -> AnyPublisher<Void, Failure> {
-    Delay(delayInterval).setFailureType(to: Failure.self).eraseToAnyPublisher()
+extension DispatchTimeInterval {
+    var nanoseconds: UInt64 {
+        switch self {
+        case .seconds(let value):
+            return .init(value * 1_000_000_000)
+        case .milliseconds(let value):
+            return .init(value * 1_000_000)
+        case .microseconds(let value):
+            return .init(value * 1_000)
+        case .nanoseconds(let value):
+            return .init(value)
+        case .never:
+            return .max
+        @unknown default:
+            return .max
+        }
+    }
+}
+
+extension DispatchTimeInterval {
+    var timeinterval: TimeInterval {
+        switch self {
+        case .seconds(let value):
+            return .init(value)
+        case .milliseconds(let value):
+            return .init(Double(value) / 1000.0)
+        case .microseconds(let value):
+            return .init(Double(value) / 1_000_000.0)
+        case .nanoseconds(let value):
+            return .init(Double(value) / 1_000_000_000.0)
+        case .never:
+            return .infinity
+        @unknown default:
+            return .infinity
+        }
+    }
 }

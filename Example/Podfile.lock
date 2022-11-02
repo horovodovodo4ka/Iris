@@ -5,7 +5,7 @@ PODS:
     - Iris-iOS/Core (= 2.4.0)
     - Iris-iOS/URLSession (= 2.4.0)
   - Iris-iOS/Alamofire (2.4.0):
-    - Alamofire (~> 5.1)
+    - Alamofire (~> 5.6)
     - Iris-iOS/Core
     - Iris-iOS/Logging
   - Iris-iOS/Core (2.4.0)
@@ -52,7 +52,7 @@ CHECKOUT OPTIONS:
 SPEC CHECKSUMS:
   Alamofire: d368e1ff8a298e6dde360e35a3e68e6c610e7204
   Astaroth: 5f57410934a28bb7d25350a4366680af13737d3d
-  Iris-iOS: a2ec92120643eb3a819e02fdbea2122608b8118d
+  Iris-iOS: 7ef8e1d3de6c240fa886ba78164f9c1f7fca1070
   Nimble: 32b14a38db269a5cc8f8ed8b0377ae657b0a2292
   Quick: 749aa754fd1e7d984f2000fe051e18a3a9809179
   SwiftLint: 414d099c0f305c6c73e56139efb468666e535ece

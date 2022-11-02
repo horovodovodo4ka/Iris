@@ -28,11 +28,11 @@ public struct Middleware {
 
 // MARK: -
 
-public typealias OperationBarrier = (Operation) -> AnyPublisher<Void, Never>
+public typealias OperationBarrier = (Operation) async -> Void
 public typealias OperationHeaders = (Operation) -> Iris.Headers
 public typealias RawOperationResult = (response: HTTPURLResponse?, headers: Headers, data: Data)
 public typealias OperationValidator = (Operation, RawOperationResult) throws -> Void
-public typealias OperationRecover = (Operation, Error) throws -> AnyPublisher<Void, Error>
+public typealias OperationRecover = (Operation, Error) async throws -> Void
 public typealias OperationSucces = (Operation, Any?) -> Void
 
 public extension Middleware {
@@ -43,8 +43,8 @@ public extension Middleware {
             self.barrier = barrier
         }
 
-        public func callAsFunction(operation: Operation) -> AnyPublisher<Void, Never> {
-            barrier(operation)
+        public func callAsFunction(operation: Operation) async {
+            await barrier(operation)
         }
     }
 
@@ -76,8 +76,8 @@ public extension Middleware {
             self.recover = recover
         }
 
-        public func callAsFunction(operation: Operation, error: Error) throws -> AnyPublisher<Void, Error> {
-            try recover(operation, error)
+        public func callAsFunction(operation: Operation, error: Error) async throws {
+            try await recover(operation, error)
         }
     }
 
