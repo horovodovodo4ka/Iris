@@ -8,6 +8,10 @@
 import Foundation
 import Alamofire
 import Combine
+import Iris
+#if canImport(IrisLogging)
+import IrisLogging
+#endif
 
 public struct AlamofireExecutor: Executor {
 

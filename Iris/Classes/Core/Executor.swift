@@ -6,18 +6,17 @@
 //
 
 import Foundation
-import Combine
 
 public typealias OperationCancellation = (() -> Void)
 public typealias OperationResult = (response: HTTPURLResponse?, data: Data)
 
 public struct CallContext {
-    let url: String
-    let method: OperationMethod
-    let headers: [String: String]
-    let timeout: TimeInterval?
-    unowned let printer: Printer
-    let callSite: StackTraceElement
+    public let url: String
+    public let method: OperationMethod
+    public let headers: [String: String]
+    public let timeout: TimeInterval?
+    public unowned let printer: Printer
+    public let callSite: StackTraceElement
 }
 
 public protocol Executor {

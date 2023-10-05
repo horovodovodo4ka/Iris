@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Iris
 
 public extension Json {
     static var encoder: RequestEncoder {

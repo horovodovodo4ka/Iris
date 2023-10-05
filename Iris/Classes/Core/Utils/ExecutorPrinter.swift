@@ -8,10 +8,17 @@
 import Foundation
 
 public struct ExecutorPrinterResponseInfo {
-    let httpResponse: HTTPURLResponse?
-    let data: Data?
-    let elapsedTime: TimeInterval
-    let error: Error?
+    public init(httpResponse: HTTPURLResponse? = nil, data: Data? = nil, elapsedTime: TimeInterval, error: Error? = nil) {
+        self.httpResponse = httpResponse
+        self.data = data
+        self.elapsedTime = elapsedTime
+        self.error = error
+    }
+    
+    public let httpResponse: HTTPURLResponse?
+    public let data: Data?
+    public let elapsedTime: TimeInterval
+    public let error: Error?
 }
 
 public protocol ExecutorPrinter {

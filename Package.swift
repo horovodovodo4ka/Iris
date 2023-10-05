@@ -9,10 +9,9 @@ let package = Package(
         .iOS(.v13)
     ],
     products: [
-        // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
-            name: "IrisCore",
-            targets: ["IrisCore"]
+            name: "Iris",
+            targets: ["Iris"]
         ),
         .library(
             name: "IrisAlamofire",
@@ -36,19 +35,15 @@ let package = Package(
         .package(url: "https://github.com/horovodovodo4ka/astaroth-ios", from: "0.6.0"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
-            name: "IrisCore",
-            dependencies: [
-                //                .target(name: "")
-            ],
+            name: "Iris",
+            dependencies: [],
             path: "Iris/Classes/Core"
         ),
         .target(
             name: "IrisAlamofire",
             dependencies: [
-                "IrisCore",
+                "Iris",
                 "IrisLogging",
                 "Alamofire"
             ],
@@ -57,7 +52,7 @@ let package = Package(
         .target(
             name: "IrisURLSession",
             dependencies: [
-                "IrisCore",
+                "Iris",
                 "IrisLogging"
             ],
             path: "Iris/Classes/URLSession"
@@ -65,14 +60,14 @@ let package = Package(
         .target(
             name: "IrisDefaults",
             dependencies: [
-                "IrisCore"
+                "Iris"
             ],
             path: "Iris/Classes/Defaults"
         ),
         .target(
             name: "IrisLogging",
             dependencies: [
-                "IrisCore",
+                "Iris",
                 "Astaroth"
             ],
             path: "Iris/Classes/Logging"

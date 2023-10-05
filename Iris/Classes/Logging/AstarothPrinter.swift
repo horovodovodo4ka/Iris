@@ -7,6 +7,7 @@
 
 import Foundation
 import Astaroth
+import Iris
 
 // swiftlint:disable:next identifier_name
 public let Network = StringTag("Network")
@@ -21,7 +22,7 @@ public class AstarothPrinter: Printer {
     private var requestString: String = ""
     private var responseString: String = ""
 
-    public func print(_ string: String, phase: Phase, callSite: StackTraceElement) {
+    public func print(_ string: String, phase: Phase, callSite: Iris.StackTraceElement) {
         switch phase {
             case .request:
                 let string = String(string.prefix(stringLimit))
@@ -40,7 +41,7 @@ public class AstarothPrinter: Printer {
     }
 }
 
-private extension StackTraceElement {
+private extension Iris.StackTraceElement {
     var astaroth: Astaroth.StackTraceElement {
         Astaroth.StackTraceElement(filename: "", method: `where`, line: 0, column: 0)
     }

@@ -7,6 +7,10 @@
 
 import Foundation
 import Combine
+import Iris
+#if canImport(IrisLogging)
+import IrisLogging
+#endif
 
 public struct URLSessionExecutor: Executor {
 

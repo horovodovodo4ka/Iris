@@ -6,7 +6,8 @@
 //
 
 import Alamofire
+import Iris
 
-extension Alamofire.MultipartFormData: MultipartFormData {
+extension Alamofire.MultipartFormData: Iris.MultipartFormData {
 
 }

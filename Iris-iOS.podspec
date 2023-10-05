@@ -8,11 +8,11 @@
 
 Pod::Spec.new do |s|
   s.name             = 'Iris-iOS'
-  s.version          = '3.0.0'
+  s.version          = '3.0.1'
   s.summary          = 'Protocol based network abstraction layer'
   s.description      = <<-DESC
-    Protocol based network abstraction layer.
-                       DESC
+  Protocol based network abstraction layer.
+  DESC
 
   s.homepage         = 'https://github.com/horovodovodo4ka/Iris'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
@@ -28,19 +28,19 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'Alamofire' do |sp|
-      sp.source_files = 'Iris/Classes/Alamofire/**/*.{swift}'
+    sp.source_files = 'Iris/Classes/Alamofire/**/*.{swift}'
 
-      sp.dependency 'Iris-iOS/Core'
-      sp.dependency 'Iris-iOS/Logging'
+    sp.dependency 'Iris-iOS/Core'
+    sp.dependency 'Iris-iOS/Logging'
 
-      sp.dependency 'Alamofire', '~> 5.6'
+    sp.dependency 'Alamofire', '~> 5.6'
   end
 
   s.subspec 'URLSession' do |sp|
-      sp.source_files = 'Iris/Classes/URLSession/**/*.{swift}'
+    sp.source_files = 'Iris/Classes/URLSession/**/*.{swift}'
 
-      sp.dependency 'Iris-iOS/Core'
-      sp.dependency 'Iris-iOS/Logging'
+    sp.dependency 'Iris-iOS/Core'
+    sp.dependency 'Iris-iOS/Logging'
   end
 
   s.subspec 'Logging' do |sp|
@@ -52,11 +52,11 @@ Pod::Spec.new do |s|
   end
 
   s.subspec 'Defaults' do |sp|
-      sp.source_files = 'Iris/Classes/Defaults/**/*.{swift}'
+    sp.source_files = 'Iris/Classes/Defaults/**/*.{swift}'
 
-      sp.dependency 'Iris-iOS/Core'
+    sp.dependency 'Iris-iOS/Core'
   end
 
   s.default_subspecs = 'Core', 'URLSession'
-  
+
 end

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Iris
 
 // MARK: - shorthands for most frequently used methods
 

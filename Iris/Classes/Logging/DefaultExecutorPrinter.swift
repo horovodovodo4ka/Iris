@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Iris
 
 private let nullString = "(null)"
 private let separatorString = "*******************************"
