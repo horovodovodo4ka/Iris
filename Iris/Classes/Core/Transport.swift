@@ -152,7 +152,7 @@ public final class Transport {
 
         let uniqueHeaders = Set(modelHeaders + operationHeaders + middlewareHeaders)
 
-        let headers = uniqueHeaders.map { ($0.key.headerName, $0.value) }
+        let headers = uniqueHeaders.map { ($0.key.name, $0.value) }
 
         let context = CallContext(url: operation.url,
                                   method: operation.method,
